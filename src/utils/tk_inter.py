@@ -11,16 +11,17 @@ def popup_tree_window(dataframe):
     update_tree(dataframe, tree)
 
 
-def update_tree(df, tree):
+def update_tree(df, tree, columns=[]):
     tree.delete(*tree.get_children()) # delete data for next rendering
-    cols = [_ for _ in df.columns if _ not in ['Detail', 'Amount', 'Currency', 'Accounts.1', 'datetime', 'Subcategory']]
-    tree['columns'] = cols
+    if columns == []:
+        columns = list(df.columns)
+    tree['columns'] = columns
     tree.column('#0', anchor='center', width=60, stretch=tk.NO)
     tree.heading('#0', text='', anchor='center', command=lambda: treeview_sort_column(tree, '#0', False))
-    for i in cols:
+    for i in columns:
         tree.column(i, anchor='center', width=130, stretch=tk.NO)
         tree.heading(i, text=i, anchor='center', command=lambda: treeview_sort_column(tree, i, False))
-    for _, row in df[cols].iterrows():
+    for _, row in df[columns].iterrows():
         tree.insert("", 0, text=row.name, values=list(row))
 
 
