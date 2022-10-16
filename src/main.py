@@ -1,6 +1,6 @@
 """
 Money Manager software developed by Salvador Hernández, September 2022
-
+test
 """
 
 import re
