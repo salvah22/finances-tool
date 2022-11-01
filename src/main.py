@@ -18,7 +18,7 @@ import pandas as pd
 
 # own utils
 from utils.time import parse_period
-from utils.data import data_loader, data_prepare
+from utils.data import data_loader, data_prepare, compute_balances
 from utils.tk_inter import update_tree, popup_tree_window
 
 

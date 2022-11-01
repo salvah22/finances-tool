@@ -35,3 +35,14 @@ def data_prepare(df):
     df['Day'] = df.apply(lambda row: row['Day'].strftime("%Y-%m-%d"), axis=1) # convert period to strf (YYYY-MM-DD)
 
     return df
+
+
+def compute_balances(df):
+    """
+    get the last known value of 'AccountBalance' for each account
+    """
+    accounts = df["Accounts"].unique()
+    balances = {}
+    for acc in accounts:
+        balances[acc] = df[df["Accounts"] == acc].iloc[0]
+    return balances
