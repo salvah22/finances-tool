@@ -1,5 +1,6 @@
 import os, sys
 import pandas as pd
+import numpy as np
 
 def data_loader(path):
     """
@@ -15,7 +16,15 @@ def data_loader(path):
     else:
         sys.exit('data_path extension not supported')
 
-    return df.iloc[::-1] # inverse order for the treeview
+    # lets check day is recognized as datetime:
+    if df.select_dtypes(include=[np.datetime64]).shape[1] == 0:
+        try:
+            df['Day'] = pd.to_datetime(df['Day'])
+        except Exception as e:
+            sys.exit(f'Day column in unrecognizable format, exception:\n{e}')
+
+    # we want inverse order for the treeview, .iloc[0] is the oldest date
+    return df.sort_values(by='Day', ascending=True) 
 
 
 def data_prepare(df):

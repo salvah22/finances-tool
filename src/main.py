@@ -5,7 +5,7 @@ Last Edit: October 2022
 """
 
 # standard python libraries
-import re, yaml
+import sys, yaml, os
 import datetime
 from dateutil.relativedelta import relativedelta
 import tkinter as tk
@@ -57,7 +57,12 @@ class App:
         self.in_out = self.config['default_subset']
         self.dates = {'initial': self.todays_month - self._period, 'final': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
         ### data ###
-        if self.user_config['data_path']:
+        if len(sys.argv) > 1:
+            if os.path.exists(sys.argv[1]):
+                self.data_path = sys.argv[1]
+            else:
+                print("supplied file path not valid, file does not exist?")
+        elif self.user_config['data_path']:
             self.data_path = self.user_config['data_path']
         else:
             self.data_path = 'src/resources/dummy_data.xlsx'
@@ -79,8 +84,7 @@ class App:
         self.df = data_prepare(self.df)
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
-        ld = self.df['Day'].iloc[-1].split('-')
-        self.dates['last_record'] = datetime.datetime.fromisoformat('-'.join([ld[0], ld[1], str(int(ld[2]) + 1)]))
+        self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
         # we don't want transfer out transactions
         self.df = self.df[self.df['Income/Expenses'] != 'Transfer out']
         self.df_subset = pd.DataFrame()
@@ -99,21 +103,23 @@ class App:
         self.tk_elems['style'].layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})])
         self.tk_elems['frame_header'] = tk.Frame(self.tk_elems['main_app'])
         self.tk_elems['frame_header'].pack(expand=True)
+        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
+        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
         self.tk_elems['date_initial'] = tk.StringVar()
         self.tk_elems['date_final'] = tk.StringVar()
         self.tk_elems['period_years'] = tk.StringVar()
         self.tk_elems['period_months'] = tk.StringVar()
         self.tk_elems['period_days'] = tk.StringVar()
-        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_header'], text='Today', width=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
+        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_period'], text='Today', width=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
         self.tk_elems['button_today'].pack(side=tk.LEFT)
-        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_header'], text='<', width=2, command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'])
+        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period'], text='<', width=2, command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'])
         self.tk_elems['button_backwards'].pack(side=tk.LEFT)
         ### DROPDOWN: DAILY/WEEKLY/MONTHLY/YEARLY
-        self.tk_elems['entry_date_initial'] = tk.Entry(self.tk_elems['frame_header'], textvariable=self.tk_elems['date_initial'], font=self.config['fonts']['f12'], width=10)
+        self.tk_elems['entry_date_initial'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['date_initial'], font=self.config['fonts']['f12'], width=10)
         self.tk_elems['entry_date_initial'].pack(side=tk.LEFT)
         self.tk_elems['entry_date_initial'].bind('<Return>', lambda event: self.on_entry_change('initial'))
         #tk.Label(self.tk_elems['frame_header'], text=" | ", font=self.config['fonts']['f12']).pack(side=tk.LEFT)
-        self.tk_elems['entry_date_final'] = tk.Entry(self.tk_elems['frame_header'], textvariable=self.tk_elems['date_final'], font=self.config['fonts']['f12'], width=10)
+        self.tk_elems['entry_date_final'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['date_final'], font=self.config['fonts']['f12'], width=10)
         self.tk_elems['entry_date_final'].pack(side=tk.LEFT)
         self.tk_elems['entry_date_final'].bind('<Return>', lambda event: self.on_entry_change('final'))
         self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_header'], text='>', width=2, command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'])
