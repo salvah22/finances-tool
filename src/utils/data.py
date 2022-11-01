@@ -37,12 +37,12 @@ def data_prepare(df):
     return df
 
 
-def compute_balances(df):
+def get_last_balance_per_account(df: pd.DataFrame) -> list[list]:
     """
     get the last known value of 'AccountBalance' for each account
     """
     accounts = df["Accounts"].unique()
-    balances = {}
+    balances = []
     for acc in accounts:
-        balances[acc] = df[df["Accounts"] == acc].iloc[0]
+        balances.append([acc, round(df[df["Accounts"] == acc].iloc[-1]["AccountBalance"], 2)])
     return balances

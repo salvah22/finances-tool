@@ -18,7 +18,7 @@ import pandas as pd
 
 # own utils
 from utils.time import parse_period
-from utils.data import data_loader, data_prepare, compute_balances
+from utils.data import data_loader, data_prepare, get_last_balance_per_account
 from utils.tk_inter import update_tree, popup_tree_window
 
 
@@ -47,11 +47,6 @@ class App:
         ### parameters ###
         with open('src/configs/app.yml', 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
-        with open('user_config.yml', 'r') as f:
-            self.user_config = yaml.load(f, Loader=yaml.FullLoader)
-
-        if self.user_config['primary_currency']:
-            self.config['display_columns'] += [self.user_config['primary_currency']]
 
         self._period = relativedelta(months=1)
         self.in_out = self.config['default_subset']
@@ -62,14 +57,22 @@ class App:
                 self.data_path = sys.argv[1]
             else:
                 print("supplied file path not valid, file does not exist?")
-        elif self.user_config['data_path']:
-            self.data_path = self.user_config['data_path']
         else:
-            self.data_path = 'src/resources/dummy_data.xlsx'
+            self.data_path = 'src/resources/dummy_data_with_balances.xlsx'
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
         print('data loaded and prepared successfully')
+
+        for currency in self.config['currencies']:
+            if currency in self.df.columns:
+                self.config['main_currency'] = currency
+                self.config['display_columns'] += [currency]
+                break
+
+        if 'AccountBalance' in self.df.columns:
+            self.config['display_columns'] += ['AccountBalance']
+
         ### tk inter gui related stuff ###
         self.tk_elems = {}
         if tk:
@@ -92,8 +95,13 @@ class App:
     def init_tk(self):
         self.tk_elems['main_app'] = tk.Tk()
         self.tk_elems['main_app'].title('Money Mgr.')
-        self.tk_elems['app_width'] = str(len(self.config['display_columns']) * 130 + 60 + 10) # 130 p/column + 60 idx + 10 margins
-        self.tk_elems['main_app'].geometry(self.tk_elems['app_width'] + 'x600')
+        self.tk_elems['screen_width'] = self.tk_elems['main_app'].winfo_screenwidth()
+        self.tk_elems['screen_height'] = self.tk_elems['main_app'].winfo_screenheight()
+        self.tk_elems['main_app_width'] = int(len(self.config['display_columns']) * 130 + 60 + 10) # 130 p/column + 60 idx + 10 margins ~ 980
+        self.tk_elems['main_app_height'] = 600
+        self.tk_elems['main_app'].geometry(f'{self.tk_elems["main_app_width"]}x{self.tk_elems["main_app_height"]}')
+        self.tk_elems['main_app_x'] = int((self.tk_elems['screen_width'])/2 - (self.tk_elems['main_app_width'])/2) # screen_width - app_width
+        self.tk_elems['main_app_y'] = int((self.tk_elems['screen_height'])/2 - (self.tk_elems['main_app_height'])/2)
         self.tk_elems['icon'] = tk.PhotoImage(file="src/resources/favicon.png")
         self.tk_elems['main_app'].tk.call('wm', 'iconphoto', self.tk_elems['main_app']._w, self.tk_elems['icon'])
         self.tk_elems['style'] = ttk.Style()
@@ -163,6 +171,10 @@ class App:
         self.tk_elems['frame_footer'].pack(expand=True)
         self.tk_elems['button_groupby_categories'] = tk.Button(self.tk_elems['frame_footer'], text='Groupby categories', width=12, command=self.groupby_categories, font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_categories'].pack(side=tk.LEFT)
+        if 'AccountBalance' in self.config['display_columns']:
+            # show AccountBalance window
+            self.show_balances()
+        
 
     def move_time_window(self, direction=''):
         if direction == 'today':
@@ -241,7 +253,13 @@ class App:
         grouped = self.df_subset.groupby(["Category"])['EUR'].sum().reset_index()
         groupedsorted = grouped.sort_values(by='EUR', ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
-        popup_tree_window(groupedsortedrounded)
+        popup_tree_window(groupedsortedrounded, "Data grouped by categories")
+
+    def show_balances(self):
+        balances = pd.DataFrame(get_last_balance_per_account(self.df))
+        position_x = self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] # width + x (center)
+        geom = [350,300,position_x,self.tk_elems['main_app_y']]
+        popup_tree_window(balances, "Balances", geom)
 
 if __name__ == '__main__':
     app = App()

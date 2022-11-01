@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
+import pandas as pd
 
 
-def popup_tree_window(dataframe):
+def popup_tree_window(dataframe: pd.DataFrame, title: str, geom: list = None):
     win = tk.Toplevel()
-    win.wm_title("Data grouped by categories")
+    win.wm_title(title)
+    if geom:
+        win.geometry(f'{geom[0]}x{geom[1]}+{geom[2]}+{geom[3]}') # (width, height, x, y)
 
     tree = ttk.Treeview(win, style="mystyle.Treeview")
     tree.pack(expand=True)
