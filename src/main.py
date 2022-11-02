@@ -88,8 +88,6 @@ class App:
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
         self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
-        # we don't want transfer out transactions
-        self.df = self.df[self.df['Income/Expenses'] != 'Transfer out']
         self.df_subset = pd.DataFrame()
 
     def init_tk(self):
@@ -221,7 +219,7 @@ class App:
         elif self.in_out in ['Income', 'Expenses']:
             self.df_subset = self.df_subset[self.df_subset['Income/Expenses'] == self.in_out]
         elif self.in_out == 'Transfer':
-            self.df_subset = self.df_subset[self.df_subset['Income/Expenses'] == 'Transfer in']
+            self.df_subset = self.df_subset[(self.df_subset['Income/Expenses'] == 'Transfer in') | (self.df_subset['Income/Expenses'] == 'Transfer out')]
         update_tree(self.df_subset, self.tk_elems['main_tree'], self.config['display_columns'])
 
     def on_double_click(self, event):
@@ -258,8 +256,11 @@ class App:
     def show_balances(self):
         balances = pd.DataFrame(get_last_balance_per_account(self.df))
         position_x = self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] # width + x (center)
-        geom = [350,300,position_x,self.tk_elems['main_app_y']]
-        popup_tree_window(balances, "Balances", geom)
+        print(balances.shape)
+        width = 130 * balances.shape[1] + 60 # 130 p/column + 60 idx + 10 margins ~ 980
+        height = 30 * balances.shape[0] + 25
+        geom = [width,height,position_x,self.tk_elems['main_app_y']]
+        popup_tree_window(balances, "Balances", geom, balances.shape[0])
 
 if __name__ == '__main__':
     app = App()

@@ -3,13 +3,12 @@ from tkinter import ttk
 import pandas as pd
 
 
-def popup_tree_window(dataframe: pd.DataFrame, title: str, geom: list = None):
+def popup_tree_window(dataframe: pd.DataFrame, title: str, geom: list = None, treeview_height: int = 10):
     win = tk.Toplevel()
     win.wm_title(title)
     if geom:
         win.geometry(f'{geom[0]}x{geom[1]}+{geom[2]}+{geom[3]}') # (width, height, x, y)
-
-    tree = ttk.Treeview(win, style="mystyle.Treeview")
+    tree = ttk.Treeview(win, style="mystyle.Treeview", height=treeview_height)
     tree.pack(expand=True)
     update_tree(dataframe, tree)
 
