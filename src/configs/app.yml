@@ -4,10 +4,10 @@ default_subset: 'Expenses' # options: 'Income', 'Expenses', 'Transfer in', 'Tran
 
 display_columns: # exclude the currency, thought to be set in user_config.yml
   - 'Day' # not optional. ISO date (or datetime) format
-  - 'Accounts'
   - 'Category'
   - 'Note'
   - 'Income/Expenses'
+  - 'Accounts'
 
 fonts:
   f08: 'sans-serif, 8'

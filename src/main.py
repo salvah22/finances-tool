@@ -67,7 +67,7 @@ class App:
         for currency in self.config['currencies']:
             if currency in self.df.columns:
                 self.config['main_currency'] = currency
-                self.config['display_columns'] += [currency]
+                self.config['display_columns'].insert(-1, currency)
                 break
 
         if 'AccountBalance' in self.df.columns:
@@ -251,16 +251,25 @@ class App:
         grouped = self.df_subset.groupby(["Category"])['EUR'].sum().reset_index()
         groupedsorted = grouped.sort_values(by='EUR', ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
-        popup_tree_window(groupedsortedrounded, "Data grouped by categories")
+        popup_tree_window(
+            dataframe=groupedsortedrounded,
+            title="Data grouped by categories",
+            icon=self.tk_elems['icon']
+        )
 
     def show_balances(self):
         balances = pd.DataFrame(get_last_balance_per_account(self.df))
         position_x = self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] # width + x (center)
-        print(balances.shape)
         width = 130 * balances.shape[1] + 60 # 130 p/column + 60 idx + 10 margins ~ 980
         height = 30 * balances.shape[0] + 25
         geom = [width,height,position_x,self.tk_elems['main_app_y']]
-        popup_tree_window(balances, "Balances", geom, balances.shape[0])
+        popup_tree_window(
+            dataframe=balances, 
+            title="Balances", 
+            geom=geom, 
+            treeview_height=balances.shape[0],
+            icon=self.tk_elems['icon']
+        )
 
 if __name__ == '__main__':
     app = App()
