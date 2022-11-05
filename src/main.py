@@ -207,8 +207,11 @@ class App:
         ### Footer buttons
         self.tk_elems['frame_footer'] = tk.Frame(self.tk_elems['main_app'])
         self.tk_elems['frame_footer'].pack(expand=True)
-        self.tk_elems['button_groupby_category'] = tk.Button(self.tk_elems['frame_footer'], text='Groupby category', width=12, command=self.groupby_category, font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
+        tk.Label(self.tk_elems['frame_footer'], text="View grouped by: ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['button_groupby_category'] = tk.Button(self.tk_elems['frame_footer'], text='Category', width=12, command=lambda: self.popup_groupby('Category'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
+        self.tk_elems['button_groupby_note'] = tk.Button(self.tk_elems['frame_footer'], text='Note', width=12, command=lambda: self.popup_groupby('Note'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
+        self.tk_elems['button_groupby_note'].pack(side=tk.LEFT)
         if 'AccountBalance' in self.config['display_columns']:
             # show AccountBalance window
             self.show_balances()
@@ -297,6 +300,8 @@ class App:
             elif self.group == 'Year':
                 self.df_subset['group'] = self.df_subset.apply(lambda row: year_from_iso(row['Day']), axis=1)
             self.df_subset = self.df_subset.groupby(['group'] + self.group_opts).sum()[self.config['main_currency']].reset_index()
+            # group has the bad habit of having infinite decimal places
+            self.df_subset[self.config['main_currency']] = self.df_subset[self.config['main_currency']].round(2)
 
         update_tree_records(self.df_subset, self.tk_elems['tree_main'], self.config['display_columns'])
 
@@ -305,6 +310,7 @@ class App:
         tree_idx = self.tk_elems['tree_main'].identify('item', event.x, event.y)
         df_idx = self.tk_elems['tree_main'].item(tree_idx,'text')
         showinfo("Transaction Details", str(self.df_subset.loc[df_idx]))
+
 
     def on_entry_change(self, instruction):
         if instruction == 'initial':
@@ -324,15 +330,17 @@ class App:
 
         self.update_subset()
 
-    def groupby_category(self):
-        grouped = self.df_subset.groupby(["Category"])['EUR'].sum().reset_index()
+
+    def popup_groupby(self, by):
+        grouped = self.df_subset.groupby([by])['EUR'].sum().reset_index()
         groupedsorted = grouped.sort_values(by='EUR', ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
         popup_tree_window(
             dataframe=groupedsortedrounded,
-            title="Data grouped by category",
+            title="Data grouped by " + by,
             icon=self.tk_elems['icon']
         )
+
 
     def show_balances(self):
         balances = pd.DataFrame(get_last_balance_per_account(self.df), columns=["Account",self.config['main_currency']])
@@ -347,6 +355,7 @@ class App:
             treeview_height=balances.shape[0],
             icon=self.tk_elems['icon']
         )
+
 
 if __name__ == '__main__':
     app = App()
