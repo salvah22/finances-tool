@@ -7,15 +7,19 @@ from typing import List
 def popup_tree_window(dataframe: pd.DataFrame, title: str, geom: list = None, treeview_height: int = 10, icon = None):
     win = tk.Toplevel()
     win.wm_title(title)
+
     if geom:
         win.geometry(f'{geom[0]}x{geom[1]}+{geom[2]}+{geom[3]}') # (width, height, x, y)
     if icon:
         win.tk.call('wm', 'iconphoto', win._w, icon)
+
     tree = ttk.Treeview(win, style="mystyle.Treeview", columns=list(dataframe.columns), height=dataframe.shape[0], show='headings')
     tree.pack(expand=True)
+
     for colname in (dataframe.columns):
         tree.column(colname, anchor='center', width=130, stretch=tk.NO)
         tree.heading(colname, text=colname, anchor='center', command=lambda: treeview_sort_column(tree, colname, False))
+        
     update_tree_records(dataframe, tree)
 
 

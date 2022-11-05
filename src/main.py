@@ -194,6 +194,8 @@ class App:
         self.tk_elems['frame_tree_container'].pack(expand=True, side=tk.TOP)
         self.tk_elems['frame_tree'] = tk.Frame(self.tk_elems['frame_tree_container'], width=self.tk_elems["frame_tree_width"], height=self.tk_elems['frame_tree_height']) # -20 for the scrollbar
         self.tk_elems['frame_tree'].grid(row=0, column=0)
+        # By default, Tkinter Frame fits to its children and thus its width and height depends on its children. 
+        # You can override this behavior and force a specific width and height to the frame.
         self.tk_elems['frame_tree'].pack_propagate(0)
         self.tk_elems['tree_main'] = ttk.Treeview(self.tk_elems['frame_tree'], style="mystyle.Treeview", height=self.tk_elems['tree_main_records'], columns=self.config['display_columns'], show='headings') # originally height=10
         self.tk_elems['tree_main'].bind('<Double-1>', self.on_double_click)
@@ -218,7 +220,7 @@ class App:
             self.group_opts.remove('Category')
         # if group options change but we not showing groups leave it
         if self.group != "None":
-            self.update_subset()
+            self.group_change(self.group)
 
     def group_change(self, group):
         self.group = group
@@ -235,7 +237,6 @@ class App:
         self.tk_elems['frame_tree']['width'] = self.tk_elems['frame_tree_width']
         update_tree_structure(self.tk_elems['tree_main'], self.config['display_columns'])
         self.update_subset()
-
 
     def move_time_window(self, direction=''):
         if direction == 'today':
