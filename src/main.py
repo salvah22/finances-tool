@@ -95,6 +95,7 @@ class App:
         self.df_subset = pd.DataFrame()
 
     def init_tk(self):
+        ### main definitions
         self.windows = ['main_app']
         self.tk_elems['main_app'] = tk.Tk()
         self.tk_elems['main_app'].title('Money Mgr.')
@@ -102,12 +103,20 @@ class App:
         self.tk_elems['screen_width'] = self.tk_elems['main_app'].winfo_screenwidth()
         self.tk_elems['screen_height'] = self.tk_elems['main_app'].winfo_screenheight()
         self.tk_elems['main_app_width'] = int(len(self.config['display_columns']) * 130 + 60 + 10) # 130 p/column + 60 idx + 10 margins ~ 980
-        self.tk_elems['main_app_height'] = 600
+        self.tk_elems['main_app_height'] = 650
         self.tk_elems['main_app'].geometry(f'{self.tk_elems["main_app_width"]}x{self.tk_elems["main_app_height"]}')
         self.tk_elems['main_app_x'] = int((self.tk_elems['screen_width'])/2 - (self.tk_elems['main_app_width'])/2) # screen_width - app_width
         self.tk_elems['main_app_y'] = int((self.tk_elems['screen_height'])/2 - (self.tk_elems['main_app_height'])/2)
         self.tk_elems['icon'] = tk.PhotoImage(file="src/resources/favicon.png")
         self.tk_elems['main_app'].tk.call('wm', 'iconphoto', self.tk_elems['main_app']._w, self.tk_elems['icon'])
+        ### menu bar
+        self.tk_elems['main_app_menubar'] = tk.Menu(self.tk_elems['main_app'])
+        self.tk_elems['main_app_filemenu'] = tk.Menu(self.tk_elems['main_app_menubar'], tearoff=0)
+        self.tk_elems['main_app_filemenu'].add_command(label="Exit", command=self.tk_elems['main_app'].destroy)
+        self.tk_elems['main_app_menubar'].add_cascade(label="File", menu=self.tk_elems['main_app_filemenu'])
+        self.tk_elems['main_app'].config(menu=self.tk_elems['main_app_menubar'])
+        
+        ### style
         self.tk_elems['style'] = ttk.Style()
         self.tk_elems['style'].configure("mystyle.Treeview", rowheight=30) # default: 20
         self.tk_elems['style'].configure("mystyle.Treeview", font=self.config['fonts']['f08'])
@@ -146,7 +155,7 @@ class App:
         self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=8)
         self.tk_elems['entry_period_days'].pack(side=tk.BOTTOM)
         self.tk_elems['entry_period_days'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        ### BUTTON GROUP: EXPENSE/INCOME/TRANSFER/ALL
+        ### Button Group In/Out (EXPENSE/INCOME/TRANSFER/ALL)
         self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'])
         self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT)
         self.tk_elems['button_income'] = tk.Button(self.tk_elems['frame_in_out'], text='Income', width=4, height=1,
@@ -268,10 +277,8 @@ class App:
 
 
     def on_double_click(self, event):
-        #idx = self.tk_elems['main_tree'].selection()[0]
         tree_idx = self.tk_elems['main_tree'].identify('item', event.x, event.y)
         df_idx = self.tk_elems['main_tree'].item(tree_idx,'text')
-        #print('you clicked on dataframes idx=', df_idx)
         showinfo("Transaction Details", str(self.df_subset.loc[df_idx]))
 
     def on_entry_change(self, instruction):
