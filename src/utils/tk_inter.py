@@ -1,25 +1,47 @@
+import pandas as pd
 import tkinter as tk
 from tkinter import ttk
-import pandas as pd
 from typing import List
 
 
-def popup_tree_window(dataframe: pd.DataFrame, title: str, geom: list = None, treeview_height: int = 10, icon = None):
+def popup_tree_window(dataframe: pd.DataFrame, title: str, position: list = None, icon = None):
+
+    # init
     win = tk.Toplevel()
     win.wm_title(title)
 
-    if geom:
-        win.geometry(f'{geom[0]}x{geom[1]}+{geom[2]}+{geom[3]}') # (width, height, x, y)
     if icon:
         win.tk.call('wm', 'iconphoto', win._w, icon)
 
+    # look
+    width = 130 * dataframe.shape[1]
+    
+    if dataframe.shape[0] > 15:
+        scrollbar_bool=True
+        width += 15
+        height = 450 + 25
+    else:
+        scrollbar_bool=False
+        height = 30 * dataframe.shape[0] + 25
+
+    if position:
+        win.geometry(f'{width}x{height}+{position[0]}+{position[1]}') # (width, height, x, y)
+    else:
+        win.geometry(f'{width}x{height}')
+
+    # treeview
     tree = ttk.Treeview(win, style="mystyle.Treeview", columns=list(dataframe.columns), height=dataframe.shape[0], show='headings')
-    tree.pack(expand=True)
+    tree.pack(side=tk.LEFT, expand=True)
+
+    if scrollbar_bool:
+        scrollbar = ttk.Scrollbar(win, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscroll=scrollbar.set)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y)
 
     for colname in (dataframe.columns):
         tree.column(colname, anchor='center', width=130, stretch=tk.NO)
         tree.heading(colname, text=colname, anchor='center', command=lambda: treeview_sort_column(tree, colname, False))
-        
+
     update_tree_records(dataframe, tree)
 
 

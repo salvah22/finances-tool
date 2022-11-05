@@ -53,7 +53,7 @@ class App:
         self.group = "None"
         self.group_opts = []
         self.in_out = self.config['default_subset']
-        self.dates = {'initial': self.todays_month - self._period, 'final': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
+        self.dates = {'start': self.todays_month - self._period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
         ### data ###
         if len(sys.argv) > 1:
             if os.path.exists(sys.argv[1]):
@@ -131,8 +131,8 @@ class App:
         ### Period frame
         self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
         self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
-        self.tk_elems['date_initial'] = tk.StringVar()
-        self.tk_elems['date_final'] = tk.StringVar()
+        self.tk_elems['start_date'] = tk.StringVar()
+        self.tk_elems['end_date'] = tk.StringVar()
         self.tk_elems['period_years'] = tk.StringVar()
         self.tk_elems['period_months'] = tk.StringVar()
         self.tk_elems['period_days'] = tk.StringVar()
@@ -140,12 +140,12 @@ class App:
         self.tk_elems['button_today'].pack(side=tk.LEFT)
         self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period'], text='<', width=2, command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'])
         self.tk_elems['button_backwards'].pack(side=tk.LEFT)
-        self.tk_elems['entry_date_initial'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['date_initial'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_initial'].pack(side=tk.LEFT)
-        self.tk_elems['entry_date_initial'].bind('<Return>', lambda event: self.on_entry_change('initial'))
-        self.tk_elems['entry_date_final'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['date_final'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_final'].pack(side=tk.LEFT)
-        self.tk_elems['entry_date_final'].bind('<Return>', lambda event: self.on_entry_change('final'))
+        self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10)
+        self.tk_elems['entry_date_start'].pack(side=tk.LEFT)
+        self.tk_elems['entry_date_start'].bind('<Return>', lambda event: self.on_entry_change('start'))
+        self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10)
+        self.tk_elems['entry_date_end'].pack(side=tk.LEFT)
+        self.tk_elems['entry_date_end'].bind('<Return>', lambda event: self.on_entry_change('end'))
         self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_header'], text='>', width=2, command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'])
         self.tk_elems['button_onwards'].pack(side=tk.LEFT)
         self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
@@ -244,42 +244,42 @@ class App:
     def move_time_window(self, direction=''):
         if direction == 'today':
             self.period = relativedelta(months=1)
-            self.dates['initial'] = self.todays_month - self.period
-            self.dates['final'] = self.todays_month
-            if self.dates['final'] + self.period <= self.dates['last_record']:
-                self.dates['initial'] = self.dates['initial'] + self.period
-                self.dates['final'] = self.dates['final'] + self.period
+            self.dates['start'] = self.todays_month - self.period
+            self.dates['end'] = self.todays_month
+            if self.dates['end'] + self.period <= self.dates['last_record']:
+                self.dates['start'] = self.dates['start'] + self.period
+                self.dates['end'] = self.dates['end'] + self.period
             else:
-                self.dates['final'] = self.dates['last_record']
-                self.dates['initial'] = self.dates['last_record'] - self.period
+                self.dates['end'] = self.dates['last_record']
+                self.dates['start'] = self.dates['last_record'] - self.period
         elif direction == 'backwards':
             # assert we don't go outside timely boundaries
-            if self.dates['initial'] - self.period >= self.dates['first_record']:
-                self.dates['initial'] = self.dates['initial'] - self.period
-                self.dates['final'] = self.dates['final'] - self.period
+            if self.dates['start'] - self.period >= self.dates['first_record']:
+                self.dates['start'] = self.dates['start'] - self.period
+                self.dates['end'] = self.dates['end'] - self.period
             else:
-                self.dates['initial'] = self.dates['first_record']
-                self.dates['final'] = self.dates['first_record'] + self.period
+                self.dates['start'] = self.dates['first_record']
+                self.dates['end'] = self.dates['first_record'] + self.period
         elif direction == 'onwards':
             # assert we don't go outside timely boundaries
-            if self.dates['final'] + self.period <= self.dates['last_record']:
-                self.dates['initial'] = self.dates['initial'] + self.period
-                self.dates['final'] = self.dates['final'] + self.period
+            if self.dates['end'] + self.period <= self.dates['last_record']:
+                self.dates['start'] = self.dates['start'] + self.period
+                self.dates['end'] = self.dates['end'] + self.period
             else:
-                self.dates['final'] = self.dates['last_record']
-                self.dates['initial'] = self.dates['last_record'] - self.period
-        self.tk_elems['date_initial'].set(self.dates['initial'].strftime("%Y-%m-%d"))
-        self.tk_elems['date_final'].set(self.dates['final'].strftime("%Y-%m-%d"))
+                self.dates['end'] = self.dates['last_record']
+                self.dates['start'] = self.dates['last_record'] - self.period
+        self.tk_elems['start_date'].set(self.dates['start'].strftime("%Y-%m-%d"))
+        self.tk_elems['end_date'].set(self.dates['end'].strftime("%Y-%m-%d"))
         self.update_subset()
 
 
     def update_subset(self, instruction=''):
         
         # timely
-        if self.dates['initial'] and self.dates['final']:
-            self.df_subset = self.df[(self.dates['initial'] <= self.df['datetime']) & (self.df['datetime'] <= self.dates['final'])]
-        self.tk_elems['date_initial'].set(self.dates['initial'].strftime("%Y-%m-%d"))
-        self.tk_elems['date_final'].set(self.dates['final'].strftime("%Y-%m-%d"))
+        if self.dates['start'] and self.dates['end']:
+            self.df_subset = self.df[(self.dates['start'] <= self.df['datetime']) & (self.df['datetime'] <= self.dates['end'])]
+        self.tk_elems['start_date'].set(self.dates['start'].strftime("%Y-%m-%d"))
+        self.tk_elems['end_date'].set(self.dates['end'].strftime("%Y-%m-%d"))
 
         # in/out
         if instruction[:5] == 'inout':
@@ -313,19 +313,19 @@ class App:
 
 
     def on_entry_change(self, instruction):
-        if instruction == 'initial':
-            self.dates['initial'] = datetime.datetime.fromisoformat(self.tk_elems['date_initial'].get())
-        elif instruction == 'final':
-            self.dates['final'] = datetime.datetime.fromisoformat(self.tk_elems['date_final'].get())
+        if instruction == 'start':
+            self.dates['start'] = datetime.datetime.fromisoformat(self.tk_elems['start_date'].get())
+        elif instruction == 'end':
+            self.dates['end'] = datetime.datetime.fromisoformat(self.tk_elems['end_date'].get())
         elif instruction == 'period':
             years = int(self.tk_elems['period_years'].get().split(" ")[0])
             months = int(self.tk_elems['period_months'].get().split(" ")[0])
             days = int(self.tk_elems['period_days'].get().split(" ")[0])
             self.period = relativedelta(years=years, months=months, days=days)
-            self.dates['final'] = self.dates['initial'] + self.period
+            self.dates['end'] = self.dates['start'] + self.period
 
-        if instruction in ['final', 'initial']:
-            self.period = parse_period(self.dates['initial'], self.dates['final'])
+        if instruction in ['end', 'start']:
+            self.period = parse_period(self.dates['start'], self.dates['end'])
             # TODO: WRITE THIS PERIOD NOW THAT IS WORKING REALLY COOL TO A DROPDOWN / ENTRY
 
         self.update_subset()
@@ -344,16 +344,12 @@ class App:
 
     def show_balances(self):
         balances = pd.DataFrame(get_last_balance_per_account(self.df), columns=["Account",self.config['main_currency']])
-        position_x = self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] # width + x (center)
-        width = 130 * balances.shape[1] # 130 p/column+ 10 margins ~ 980
-        height = 30 * balances.shape[0] + 25
-        geom = [width,height,position_x,self.tk_elems['main_app_y']]
+        position = [self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] + 10, self.tk_elems['main_app_y']] # [x,y]
         popup_tree_window(
             dataframe=balances, 
             title="Balances", 
-            geom=geom, 
-            treeview_height=balances.shape[0],
-            icon=self.tk_elems['icon']
+            position=position, 
+            icon=self.tk_elems['icon'],
         )
 
 

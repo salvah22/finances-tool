@@ -23,6 +23,9 @@ def data_loader(path):
         except Exception as e:
             sys.exit(f'Day column in unrecognizable format, exception:\n{e}')
 
+    # nans look ugly
+    df.fillna("", inplace=True)
+
     # we want inverse order for the treeview, .iloc[0] is the oldest date
     return df.sort_values(by='Day', ascending=True) 
 
