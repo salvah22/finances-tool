@@ -20,7 +20,7 @@ import pandas as pd
 # own utils
 from utils.time import parse_period
 from utils.data import *
-from utils.tk_inter import update_tree, popup_tree_window
+from utils.tk_inter import *
 
 
 class App:
@@ -71,11 +71,13 @@ class App:
         for currency in self.config['currencies']:
             if currency in self.df.columns:
                 self.config['main_currency'] = currency
-                self.config['display_columns'].insert(-1, currency)
+                self.config['columns'].insert(-1, currency)
                 break
 
         if 'AccountBalance' in self.df.columns:
-            self.config['display_columns'] += ['AccountBalance']
+            self.config['columns'] += ['AccountBalance']
+        
+        self.config['display_columns'] = self.config['columns']
 
         ### tk inter gui related stuff ###
         self.tk_elems = {}
@@ -97,13 +99,16 @@ class App:
     def init_tk(self):
         ### main definitions
         self.windows = ['main_app']
+        self.tk_elems['tree_main_records'] = 15
+        self.tk_elems['frame_tree_height'] = int(30 * self.tk_elems['tree_main_records'])
+        self.tk_elems['frame_tree_width'] = int(60 + (len(self.config['display_columns']) - 1) * 130) # 60 idx + 130 p/column 
         self.tk_elems['main_app'] = tk.Tk()
         self.tk_elems['main_app'].title('Money Mgr.')
         self.tk_elems['main_app'].bind('<Escape>', lambda e: self.tk_elems['main_app'].destroy())
         self.tk_elems['screen_width'] = self.tk_elems['main_app'].winfo_screenwidth()
         self.tk_elems['screen_height'] = self.tk_elems['main_app'].winfo_screenheight()
-        self.tk_elems['main_app_width'] = int(len(self.config['display_columns']) * 130 + 60 + 10) # 130 p/column + 60 idx + 10 margins ~ 980
-        self.tk_elems['main_app_height'] = 650
+        self.tk_elems['main_app_width'] = self.tk_elems['frame_tree_width'] + 20 # + 10 for margins ~ 1000
+        self.tk_elems['main_app_height'] = self.tk_elems['frame_tree_height'] + 200 # 450 treeview + 200 other elements ~ 650
         self.tk_elems['main_app'].geometry(f'{self.tk_elems["main_app_width"]}x{self.tk_elems["main_app_height"]}')
         self.tk_elems['main_app_x'] = int((self.tk_elems['screen_width'])/2 - (self.tk_elems['main_app_width'])/2) # screen_width - app_width
         self.tk_elems['main_app_y'] = int((self.tk_elems['screen_height'])/2 - (self.tk_elems['main_app_height'])/2)
@@ -115,7 +120,6 @@ class App:
         self.tk_elems['main_app_filemenu'].add_command(label="Exit", command=self.tk_elems['main_app'].destroy)
         self.tk_elems['main_app_menubar'].add_cascade(label="File", menu=self.tk_elems['main_app_filemenu'])
         self.tk_elems['main_app'].config(menu=self.tk_elems['main_app_menubar'])
-        
         ### style
         self.tk_elems['style'] = ttk.Style()
         self.tk_elems['style'].configure("mystyle.Treeview", rowheight=30) # default: 20
@@ -159,22 +163,21 @@ class App:
         self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'])
         self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT)
         self.tk_elems['button_income'] = tk.Button(self.tk_elems['frame_in_out'], text='Income', width=4, height=1,
-                                                  command=lambda: self.update_subset('Income'),
+                                                  command=lambda: self.update_subset('inout_Income'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['blue'])
         self.tk_elems['button_income'].grid(row=0, column=0)
         self.tk_elems['button_expenses'] = tk.Button(self.tk_elems['frame_in_out'], text='Expenses', width=4, height=1,
-                                                  command=lambda: self.update_subset('Expenses'),
+                                                  command=lambda: self.update_subset('inout_Expenses'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['red'])
         self.tk_elems['button_expenses'].grid(row=1, column=0)
         self.tk_elems['button_transfers'] = tk.Button(self.tk_elems['frame_in_out'], text='Transfer', width=4, height=1,
-                                                  command=lambda: self.update_subset('Transfer'),
+                                                  command=lambda: self.update_subset('inout_Transfer'),
                                                   font=self.config['fonts']['f10'])
         self.tk_elems['button_transfers'].grid(row=0, column=1)
         self.tk_elems['button_all'] = tk.Button(self.tk_elems['frame_in_out'], text='All', width=4, height=1,
-                                                  command=lambda: self.update_subset('All'),
+                                                  command=lambda: self.update_subset('inout_All'),
                                                   font=self.config['fonts']['f10'])
         self.tk_elems['button_all'].grid(row=1, column=1)
-
         ### GROUPING
         self.tk_elems['frame_groups'] = tk.Frame(self.tk_elems['frame_header'], padx=5, pady=5) # , highlightbackground="black", highlightthickness=2
         self.tk_elems['frame_groups'].pack(expand=True)
@@ -187,14 +190,21 @@ class App:
         self.tk_elems['checkbox_category'] = ttk.Checkbutton(self.tk_elems['frame_groups'], text='category', variable=self.tk_elems['group_category'], onvalue=True, offvalue=False, command=self.group_opts_change)
         self.tk_elems['checkbox_category'].pack(side=tk.TOP, expand=True, padx=(0, 5))
         ### MAIN BIG TREE
-        self.tk_elems['frame_tree'] = tk.Frame(self.tk_elems['main_app'], padx=5, pady=5)
-        self.tk_elems['frame_tree'].pack(expand=True)
-        self.tk_elems['main_tree'] = ttk.Treeview(self.tk_elems['frame_tree'], style="mystyle.Treeview", height=15) # originally height=10
-        self.tk_elems['main_tree'].pack(expand=True)
-        self.tk_elems['main_tree'].bind('<Double-1>', self.on_double_click)
+        self.tk_elems['frame_tree_container'] = tk.Frame(self.tk_elems['main_app'])
+        self.tk_elems['frame_tree_container'].pack(expand=True, side=tk.TOP)
+        self.tk_elems['frame_tree'] = tk.Frame(self.tk_elems['frame_tree_container'], width=self.tk_elems["frame_tree_width"], height=self.tk_elems['frame_tree_height']) # -20 for the scrollbar
+        self.tk_elems['frame_tree'].grid(row=0, column=0)
+        self.tk_elems['frame_tree'].pack_propagate(0)
+        self.tk_elems['tree_main'] = ttk.Treeview(self.tk_elems['frame_tree'], style="mystyle.Treeview", height=self.tk_elems['tree_main_records'], columns=self.config['display_columns'], show='headings') # originally height=10
+        self.tk_elems['tree_main'].bind('<Double-1>', self.on_double_click)
+        self.tk_elems['tree_main'].pack(side=tk.LEFT) # .pack(side=tk.LEFT)
+        update_tree_structure(self.tk_elems['tree_main'], self.config['display_columns'])
+        self.tk_elems['tree_main_scrollbar'] = ttk.Scrollbar(self.tk_elems['frame_tree_container'], orient=tk.VERTICAL, command=self.tk_elems['tree_main'].yview)
+        self.tk_elems['tree_main'].configure(yscroll=self.tk_elems['tree_main_scrollbar'].set)
+        self.tk_elems['tree_main_scrollbar'].grid(row=0, column=1, sticky='ns') # .pack(side=tk.LEFT, fill=tk.Y)
+        ### Footer buttons
         self.tk_elems['frame_footer'] = tk.Frame(self.tk_elems['main_app'])
         self.tk_elems['frame_footer'].pack(expand=True)
-
         self.tk_elems['button_groupby_category'] = tk.Button(self.tk_elems['frame_footer'], text='Groupby category', width=12, command=self.groupby_category, font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         if 'AccountBalance' in self.config['display_columns']:
@@ -206,11 +216,24 @@ class App:
             self.group_opts.append('Category')
         elif 'Category' in self.group_opts:
             self.group_opts.remove('Category')
+        # if group options change but we not showing groups leave it
         if self.group != "None":
             self.update_subset()
 
     def group_change(self, group):
         self.group = group
+
+        if group == 'None':
+            self.config['display_columns'] = self.config['columns']
+            # -1 since original columns got ID
+            self.tk_elems['frame_tree_width'] = int(60 + (len(self.config['display_columns']) - 1) * 130)
+        else:
+            self.config['display_columns'] = ['group'] + self.group_opts + [self.config['main_currency']]
+            # groups aint got ID
+            self.tk_elems['frame_tree_width'] = int(len(self.config['display_columns']) * 130)
+            
+        self.tk_elems['frame_tree']['width'] = self.tk_elems['frame_tree_width']
+        update_tree_structure(self.tk_elems['tree_main'], self.config['display_columns'])
         self.update_subset()
 
 
@@ -245,40 +268,41 @@ class App:
         self.tk_elems['date_final'].set(self.dates['final'].strftime("%Y-%m-%d"))
         self.update_subset()
 
+
     def update_subset(self, instruction=''):
-        if instruction != '':
-            self.in_out = instruction
+        
         # timely
         if self.dates['initial'] and self.dates['final']:
             self.df_subset = self.df[(self.dates['initial'] <= self.df['datetime']) & (self.df['datetime'] <= self.dates['final'])]
         self.tk_elems['date_initial'].set(self.dates['initial'].strftime("%Y-%m-%d"))
         self.tk_elems['date_final'].set(self.dates['final'].strftime("%Y-%m-%d"))
+
         # in/out
+        if instruction[:5] == 'inout':
+            self.in_out = instruction[6:]
         if self.in_out == 'All':
             pass
         elif self.in_out in ['Income', 'Expenses']:
             self.df_subset = self.df_subset[self.df_subset['Income/Expenses'] == self.in_out]
         elif self.in_out == 'Transfer':
             self.df_subset = self.df_subset[(self.df_subset['Income/Expenses'] == 'Transfer in') | (self.df_subset['Income/Expenses'] == 'Transfer out')]
-        if self.group == 'None':
-            cols = self.config['display_columns']
-        else:
-            cols = ["group"] + self.group_opts
+
+        # groups
+        if self.group != 'None':
             if self.group == 'Day':
                 self.df_subset['group'] = self.df_subset['Day']
             elif self.group == 'Month':
                 self.df_subset['group'] = self.df_subset.apply(lambda row: year_month_from_iso(row['Day']), axis=1)
             elif self.group == 'Year':
                 self.df_subset['group'] = self.df_subset.apply(lambda row: year_from_iso(row['Day']), axis=1)
-            self.df_subset = self.df_subset.groupby(cols).sum()[self.config['main_currency']].reset_index()
-            # for display:
-            cols += [self.config['main_currency']]
-        update_tree(self.df_subset, self.tk_elems['main_tree'], cols)
+            self.df_subset = self.df_subset.groupby(['group'] + self.group_opts).sum()[self.config['main_currency']].reset_index()
+
+        update_tree_records(self.df_subset, self.tk_elems['tree_main'], self.config['display_columns'])
 
 
     def on_double_click(self, event):
-        tree_idx = self.tk_elems['main_tree'].identify('item', event.x, event.y)
-        df_idx = self.tk_elems['main_tree'].item(tree_idx,'text')
+        tree_idx = self.tk_elems['tree_main'].identify('item', event.x, event.y)
+        df_idx = self.tk_elems['tree_main'].item(tree_idx,'text')
         showinfo("Transaction Details", str(self.df_subset.loc[df_idx]))
 
     def on_entry_change(self, instruction):
@@ -312,7 +336,7 @@ class App:
     def show_balances(self):
         balances = pd.DataFrame(get_last_balance_per_account(self.df), columns=["Account",self.config['main_currency']])
         position_x = self.tk_elems['main_app_width'] + self.tk_elems['main_app_x'] # width + x (center)
-        width = 130 * balances.shape[1] + 60 # 130 p/column + 60 idx + 10 margins ~ 980
+        width = 130 * balances.shape[1] # 130 p/column+ 10 margins ~ 980
         height = 30 * balances.shape[0] + 25
         geom = [width,height,position_x,self.tk_elems['main_app_y']]
         popup_tree_window(
