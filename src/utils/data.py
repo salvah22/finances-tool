@@ -32,8 +32,8 @@ def data_prepare(df):
     """
     Function for pre-processing the dataframe
     """
-    df['datetime'] = df['Day'] # period is a very bad word for date, use it as datetime
-    df['Day'] = df.apply(lambda row: row['Day'].strftime("%Y-%m-%d"), axis=1) # convert period to strf (YYYY-MM-DD)
+    df['datetime'] = df['Day'] # period is a very vague word for date, use it as datetime
+    df['Day'] = [_.strftime("%Y-%m-%d") for _ in df['datetime'].to_list()] # convert period to strf (YYYY-MM-DD)
 
     return df
 

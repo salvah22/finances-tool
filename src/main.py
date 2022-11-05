@@ -296,9 +296,9 @@ class App:
             if self.group == 'Day':
                 self.df_subset['group'] = self.df_subset['Day']
             elif self.group == 'Month':
-                self.df_subset['group'] = self.df_subset.apply(lambda row: year_month_from_iso(row['Day']), axis=1)
+                self.df_subset['group'] = [year_month_from_iso(_) for _ in self.df_subset['Day'].to_list()]
             elif self.group == 'Year':
-                self.df_subset['group'] = self.df_subset.apply(lambda row: year_from_iso(row['Day']), axis=1)
+                self.df_subset['group'] = [year_from_iso(_) for _ in self.df_subset['Day'].to_list()]
             self.df_subset = self.df_subset.groupby(['group'] + self.group_opts).sum()[self.config['main_currency']].reset_index()
             # group has the bad habit of having infinite decimal places
             self.df_subset[self.config['main_currency']] = self.df_subset[self.config['main_currency']].round(2)
