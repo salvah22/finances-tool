@@ -46,3 +46,11 @@ def get_last_balance_per_account(df: pd.DataFrame) -> list[list]:
     for acc in accounts:
         balances.append([acc, round(df[df["Accounts"] == acc].iloc[-1]["AccountBalance"], 2)])
     return balances
+
+def year_month_from_iso(datestring: str):
+    yyyy, mm, _ = datestring.split('-')
+    return yyyy + "-" + mm
+
+def year_from_iso(datestring: str):
+    yyyy, _, _ = datestring.split('-')
+    return yyyy
