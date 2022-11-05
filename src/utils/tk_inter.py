@@ -20,13 +20,16 @@ def update_tree(dataframe: pd.DataFrame, tree: ttk.Treeview, columns: List[str] 
     tree.delete(*tree.get_children()) # delete data for next rendering
     if columns == []:
         columns = list(dataframe.columns)
+
     tree['columns'] = columns
     tree.column('#0', anchor='center', width=60, stretch=tk.NO)
     tree.heading('#0', text='', anchor='center', command=lambda: treeview_sort_column(tree, '#0', False))
     for i in columns:
         tree.column(i, anchor='center', width=130, stretch=tk.NO)
         tree.heading(i, text=i, anchor='center', command=lambda: treeview_sort_column(tree, i, False))
+
     for _, row in dataframe[columns].iterrows():
+
         tree.insert("", 0, text=row.name, values=list(row))
 
 

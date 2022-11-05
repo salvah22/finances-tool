@@ -5,6 +5,7 @@ Last Edit: October 2022
 """
 
 # standard python libraries
+
 import sys, yaml, os
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -43,9 +44,6 @@ class App:
         self.tk_elems['period_months'].set(str(self.period.months) + " months")
         self.tk_elems['period_years'].set(str(self.period.years) + " years")
 
-    def callbackss(selection):
-        print(selection)
-
     def __init__(self, tk=True):
         ### parameters ###
         with open('src/configs/app.yml', 'r') as f:
@@ -64,6 +62,7 @@ class App:
                 print("supplied file path not valid, file does not exist?")
         else:
             self.data_path = 'src/resources/dummy_data_with_balances.xlsx'
+
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
@@ -165,6 +164,7 @@ class App:
                                                   command=lambda: self.update_subset('All'),
                                                   font=self.config['fonts']['f10'])
         self.tk_elems['button_all'].grid(row=1, column=1)
+
         ### GROUPING
         self.tk_elems['frame_groups'] = tk.Frame(self.tk_elems['frame_header'], padx=5, pady=5) # , highlightbackground="black", highlightthickness=2
         self.tk_elems['frame_groups'].pack(expand=True)
@@ -184,6 +184,7 @@ class App:
         self.tk_elems['main_tree'].bind('<Double-1>', self.on_double_click)
         self.tk_elems['frame_footer'] = tk.Frame(self.tk_elems['main_app'])
         self.tk_elems['frame_footer'].pack(expand=True)
+
         self.tk_elems['button_groupby_category'] = tk.Button(self.tk_elems['frame_footer'], text='Groupby category', width=12, command=self.groupby_category, font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         if 'AccountBalance' in self.config['display_columns']:
@@ -201,6 +202,7 @@ class App:
     def group_change(self, group):
         self.group = group
         self.update_subset()
+
 
     def move_time_window(self, direction=''):
         if direction == 'today':
@@ -262,6 +264,7 @@ class App:
             # for display:
             cols += [self.config['main_currency']]
         update_tree(self.df_subset, self.tk_elems['main_tree'], cols)
+
 
     def on_double_click(self, event):
         #idx = self.tk_elems['main_tree'].selection()[0]

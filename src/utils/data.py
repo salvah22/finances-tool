@@ -15,7 +15,7 @@ def data_loader(path):
         df = pd.read_csv(path)
     else:
         sys.exit('data_path extension not supported')
-
+        
     # lets check day is recognized as datetime:
     if df.select_dtypes(include=[np.datetime64]).shape[1] == 0:
         try:
@@ -25,6 +25,7 @@ def data_loader(path):
 
     # we want inverse order for the treeview, .iloc[0] is the oldest date
     return df.sort_values(by='Day', ascending=True) 
+
 
 
 def data_prepare(df):
