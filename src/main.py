@@ -98,6 +98,7 @@ class App:
         self.windows = ['main_app']
         self.tk_elems['main_app'] = tk.Tk()
         self.tk_elems['main_app'].title('Money Mgr.')
+        self.tk_elems['main_app'].bind('<Escape>', lambda e: self.tk_elems['main_app'].destroy())
         self.tk_elems['screen_width'] = self.tk_elems['main_app'].winfo_screenwidth()
         self.tk_elems['screen_height'] = self.tk_elems['main_app'].winfo_screenheight()
         self.tk_elems['main_app_width'] = int(len(self.config['display_columns']) * 130 + 60 + 10) # 130 p/column + 60 idx + 10 margins ~ 980
