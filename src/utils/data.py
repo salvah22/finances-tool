@@ -1,5 +1,6 @@
 import os, sys
 import pandas as pd
+import numpy as np
 
 def data_loader(path):
     """
@@ -14,8 +15,17 @@ def data_loader(path):
         df = pd.read_csv(path)
     else:
         sys.exit('data_path extension not supported')
+        
+    # lets check day is recognized as datetime:
+    if df.select_dtypes(include=[np.datetime64]).shape[1] == 0:
+        try:
+            df['Day'] = pd.to_datetime(df['Day'])
+        except Exception as e:
+            sys.exit(f'Day column in unrecognizable format, exception:\n{e}')
 
-    return df.iloc[::-1] # inverse order for the treeview
+    # we want inverse order for the treeview, .iloc[0] is the oldest date
+    return df.sort_values(by='Day', ascending=True) 
+
 
 
 def data_prepare(df):
@@ -26,3 +36,22 @@ def data_prepare(df):
     df['Day'] = df.apply(lambda row: row['Day'].strftime("%Y-%m-%d"), axis=1) # convert period to strf (YYYY-MM-DD)
 
     return df
+
+
+def get_last_balance_per_account(df: pd.DataFrame) -> list[list]:
+    """
+    get the last known value of 'AccountBalance' for each account
+    """
+    accounts = df["Accounts"].unique()
+    balances = []
+    for acc in accounts:
+        balances.append([acc, round(df[df["Accounts"] == acc].iloc[-1]["AccountBalance"], 2)])
+    return balances
+
+def year_month_from_iso(datestring: str):
+    yyyy, mm, _ = datestring.split('-')
+    return yyyy + "-" + mm
+
+def year_from_iso(datestring: str):
+    yyyy, _, _ = datestring.split('-')
+    return yyyy
