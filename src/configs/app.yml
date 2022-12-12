@@ -2,13 +2,12 @@ currencies: ['USD','EUR','GBP']
 
 default_subset: 'Expenses' # options: 'Income', 'Expenses', 'Transfer in', 'Transfer out', 'All'
 
-columns: # exclude the currency, thought to be set in user_config.yml
-  - 'ID'
+columns: # those in the data file
   - 'Day' # not optional. ISO date (or datetime) format
+  - 'Accounts'
+  - 'Income/Expenses'
   - 'Category'
   - 'Note'
-  - 'Income/Expenses'
-  - 'Accounts'
 
 fonts:
   f08: 'sans-serif, 8'

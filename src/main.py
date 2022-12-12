@@ -44,16 +44,17 @@ class App:
         self.tk_elems['period_months'].set(str(self.period.months) + " months")
         self.tk_elems['period_years'].set(str(self.period.years) + " years")
 
+    # constructor, loads configs, data, and bootstrap the tk inter
     def __init__(self, tk=True):
         ### parameters ###
         with open('src/configs/app.yml', 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
-
         self._period = relativedelta(months=1)
         self.group = "None"
         self.group_opts = []
         self.in_out = self.config['default_subset']
         self.dates = {'start': self.todays_month - self._period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
+
         ### data ###
         if len(sys.argv) > 1:
             if os.path.exists(sys.argv[1]):
@@ -62,24 +63,16 @@ class App:
                 print("supplied file path not valid, file does not exist?")
         else:
             self.data_path = 'src/resources/dummy_data_with_balances.xlsx'
-
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
         print('data loaded and prepared successfully')
-
-        for currency in self.config['currencies']:
-            if currency in self.df.columns:
-                self.config['main_currency'] = currency
-                self.config['columns'].insert(-1, currency)
-                break
-
-        if 'AccountBalance' in self.df.columns:
-            self.config['columns'] += ['AccountBalance']
-        
+        # DF is supposed to have an ID and AccountBalance column in this point
+        self.config['columns'].insert(0, 'ID')
+        self.config['columns'].append('AccountBalance')
         self.config['display_columns'] = self.config['columns']
 
-        ### tk inter gui related stuff ###
+        ### tk inter gui ###
         self.tk_elems = {}
         if tk:
             self.init_tk()
@@ -87,14 +80,26 @@ class App:
             self.move_time_window('onwards') # wraps update_subset
             self.tk_elems['main_app'].mainloop()
 
+
     def load_df(self):
-        self.df = data_loader(self.data_path) # checks for the extensions and employs the proper load function
-        # prepare/preprocess the dataframe:
-        self.df = data_prepare(self.df)
+        # for employing the proper load function based on extension
+        self.df = data_loader(self.data_path)
+        # analyze the df for main_currency
+        self.determine_main_currency()
+        # ensure a datatime type column exists, fills NA's, adds ID and AccountBalance columns, sort by Day:
+        self.df = data_prepare(self.df, self.config['main_currency'])
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
         self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
-        self.df_subset = pd.DataFrame()
+
+    def determine_main_currency(self):
+        c = self.config['currencies'] 
+        for currency in c:
+            if currency in self.df.columns:
+                self.config['main_currency'] = currency
+                self.config['columns'].append(currency)
+                return
+        sys.exit('no valid currency found in dataframe. the header of one column has to match one of the following: ' + str(c))       
 
     def init_tk(self):
         ### main definitions
@@ -212,9 +217,8 @@ class App:
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         self.tk_elems['button_groupby_note'] = tk.Button(self.tk_elems['frame_footer'], text='Note', width=12, command=lambda: self.popup_groupby('Note'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_note'].pack(side=tk.LEFT)
-        if 'AccountBalance' in self.config['display_columns']:
-            # show AccountBalance window
-            self.show_balances()
+        # show popup window with balances
+        self.show_balances()
     
     def group_opts_change(self):
         if self.tk_elems['group_category'].get():
@@ -332,8 +336,8 @@ class App:
 
 
     def popup_groupby(self, by):
-        grouped = self.df_subset.groupby([by])['EUR'].sum().reset_index()
-        groupedsorted = grouped.sort_values(by='EUR', ascending=True)
+        grouped = self.df_subset.groupby([by])[self.config['main_currency']].sum().reset_index()
+        groupedsorted = grouped.sort_values(by=self.config['main_currency'], ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
         popup_tree_window(
             dataframe=groupedsortedrounded,
