@@ -74,7 +74,7 @@ def update_tree_records(dataframe: pd.DataFrame, tree: ttk.Treeview, columns: Li
 
     if columns == []:
         columns = list(dataframe.columns)
-
+    
     for row in dataframe[columns].to_numpy():
         tree.insert("", 0, values=row.tolist())
 

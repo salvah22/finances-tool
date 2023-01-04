@@ -131,58 +131,62 @@ class App:
         self.tk_elems['style'].configure("mystyle.Treeview", font=self.config['fonts']['f08'])
         self.tk_elems['style'].configure("mystyle.Treeview.Heading", font=self.config['fonts']['f10'])
         self.tk_elems['style'].layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})])
-        self.tk_elems['frame_header'] = tk.Frame(self.tk_elems['main_app'])
+        self.tk_elems['frame_header'] = tk.Frame(self.tk_elems['main_app'], borderwidth=0)
         self.tk_elems['frame_header'].pack(expand=True)
-        ### Period frame
-        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
+        ### Period frames
+        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_header'], text='Today', height=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
+        self.tk_elems['button_today'].pack(side=tk.LEFT, fill=tk.Y)
+        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
+        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT, fill=tk.Y)
+        self.tk_elems['frame_period_alter'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
+        self.tk_elems['frame_period_alter'].pack(expand=True, side=tk.TOP, fill=tk.Y)
         self.tk_elems['start_date'] = tk.StringVar()
         self.tk_elems['end_date'] = tk.StringVar()
         self.tk_elems['period_years'] = tk.StringVar()
         self.tk_elems['period_months'] = tk.StringVar()
         self.tk_elems['period_days'] = tk.StringVar()
-        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_period'], text='Today', width=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
-        self.tk_elems['button_today'].pack(side=tk.LEFT)
-        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period'], text='<', width=2, command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'])
-        self.tk_elems['button_backwards'].pack(side=tk.LEFT)
-        self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_start'].pack(side=tk.LEFT)
+        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='<', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_backwards'].pack(side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10, justify='center')
+        self.tk_elems['entry_date_start'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_start'].bind('<Return>', lambda event: self.on_entry_change('start'))
-        self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_end'].pack(side=tk.LEFT)
+        self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10, justify='center')
+        self.tk_elems['entry_date_end'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_end'].bind('<Return>', lambda event: self.on_entry_change('end'))
-        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_header'], text='>', width=2, command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'])
-        self.tk_elems['button_onwards'].pack(side=tk.LEFT)
-        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
-        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_years'].pack(side=tk.BOTTOM)
+        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='>', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_onwards'].pack(side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['frame_DMY'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
+        self.tk_elems['frame_DMY'].pack(expand=True, side=tk.BOTTOM, fill=tk.Y)
+        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=11, justify='center')
+        self.tk_elems['entry_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_period_years'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_months'].pack(side=tk.BOTTOM)
+        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=11, justify='center')
+        self.tk_elems['entry_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_period_months'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_days'].pack(side=tk.BOTTOM)
+        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=11, justify='center')
+        self.tk_elems['entry_period_days'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_period_days'].bind('<Return>', lambda event: self.on_entry_change('period'))
         ### Button Group In/Out (EXPENSE/INCOME/TRANSFER/ALL)
-        self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT)
+        self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
+        self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['frame_in_out'].columnconfigure(tuple(range(2)), weight=1)
+        self.tk_elems['frame_in_out'].rowconfigure(tuple(range(2)), weight=1)
         self.tk_elems['button_income'] = tk.Button(self.tk_elems['frame_in_out'], text='Income', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Income'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['blue'])
-        self.tk_elems['button_income'].grid(row=0, column=0)
+        self.tk_elems['button_income'].grid(row=0, column=0, sticky="nswe")
         self.tk_elems['button_expenses'] = tk.Button(self.tk_elems['frame_in_out'], text='Expenses', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Expenses'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['red'])
-        self.tk_elems['button_expenses'].grid(row=1, column=0)
+        self.tk_elems['button_expenses'].grid(row=1, column=0, sticky="nswe")
         self.tk_elems['button_transfers'] = tk.Button(self.tk_elems['frame_in_out'], text='Transfer', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Transfer'),
                                                   font=self.config['fonts']['f10'])
-        self.tk_elems['button_transfers'].grid(row=0, column=1)
+        self.tk_elems['button_transfers'].grid(row=0, column=1, sticky="nswe")
         self.tk_elems['button_all'] = tk.Button(self.tk_elems['frame_in_out'], text='All', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_All'),
                                                   font=self.config['fonts']['f10'])
-        self.tk_elems['button_all'].grid(row=1, column=1)
+        self.tk_elems['button_all'].grid(row=1, column=1, sticky="nswe")
         ### GROUPING
         self.tk_elems['frame_groups'] = tk.Frame(self.tk_elems['frame_header'], padx=5, pady=5) # , highlightbackground="black", highlightthickness=2
         self.tk_elems['frame_groups'].pack(expand=True)
@@ -275,6 +279,7 @@ class App:
         self.tk_elems['start_date'].set(self.dates['start'].strftime("%Y-%m-%d"))
         self.tk_elems['end_date'].set(self.dates['end'].strftime("%Y-%m-%d"))
         self.update_subset()
+        self.tk_elems['tree_main'].yview_moveto(0)
 
 
     def update_subset(self, instruction=''):
@@ -312,7 +317,7 @@ class App:
 
     def on_double_click(self, event):
         tree_idx = self.tk_elems['tree_main'].identify('item', event.x, event.y)
-        df_idx = self.tk_elems['tree_main'].item(tree_idx,'text')
+        df_idx = int(self.tk_elems['tree_main'].item(tree_idx, 'values')[0]) # formerly (tree_idx, 'text') when ID was supplied
         showinfo("Transaction Details", str(self.df_subset.loc[df_idx]))
 
 
@@ -341,7 +346,7 @@ class App:
         groupedsortedrounded = groupedsorted.round(0)
         popup_tree_window(
             dataframe=groupedsortedrounded,
-            title="Data grouped by " + by,
+            title="Grouped by " + by,
             icon=self.tk_elems['icon']
         )
 
