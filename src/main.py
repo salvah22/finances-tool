@@ -30,6 +30,7 @@ class App:
     today = datetime.datetime.today()
     todays_month = datetime.datetime(today.year, today.month, 1)
 
+    '''
     @property
     def period(self):
         return self._period
@@ -43,17 +44,18 @@ class App:
         self.tk_elems['period_days'].set(str(self.period.days) + " days")
         self.tk_elems['period_months'].set(str(self.period.months) + " months")
         self.tk_elems['period_years'].set(str(self.period.years) + " years")
+    '''
 
     # constructor, loads configs, data, and bootstrap the tk inter
     def __init__(self, tk=True):
         ### parameters ###
         with open('src/configs/app.yml', 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
-        self._period = relativedelta(months=1)
+        self.period = relativedelta(months=1)
         self.group = "None"
         self.group_opts = []
         self.in_out = self.config['default_subset']
-        self.dates = {'start': self.todays_month - self._period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
+        self.dates = {'start': self.todays_month - self.period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
 
         ### data ###
         if len(sys.argv) > 1:
@@ -76,7 +78,6 @@ class App:
         self.tk_elems = {}
         if tk:
             self.init_tk()
-            self.period_update_callback()
             self.move_time_window('onwards') # wraps update_subset
             self.tk_elems['main_app'].mainloop()
 
@@ -142,10 +143,7 @@ class App:
         self.tk_elems['frame_period_alter'].pack(expand=True, side=tk.TOP, fill=tk.Y)
         self.tk_elems['start_date'] = tk.StringVar()
         self.tk_elems['end_date'] = tk.StringVar()
-        self.tk_elems['period_years'] = tk.StringVar()
-        self.tk_elems['period_months'] = tk.StringVar()
-        self.tk_elems['period_days'] = tk.StringVar()
-        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='<', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='◄', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
         self.tk_elems['button_backwards'].pack(side=tk.LEFT, fill=tk.BOTH)
         self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10, justify='center')
         self.tk_elems['entry_date_start'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
@@ -153,19 +151,30 @@ class App:
         self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10, justify='center')
         self.tk_elems['entry_date_end'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_end'].bind('<Return>', lambda event: self.on_entry_change('end'))
-        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='>', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='►', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
         self.tk_elems['button_onwards'].pack(side=tk.LEFT, fill=tk.BOTH)
         self.tk_elems['frame_DMY'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
         self.tk_elems['frame_DMY'].pack(expand=True, side=tk.BOTTOM, fill=tk.Y)
-        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=11, justify='center')
-        self.tk_elems['entry_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.tk_elems['entry_period_years'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=11, justify='center')
-        self.tk_elems['entry_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.tk_elems['entry_period_months'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=11, justify='center')
-        self.tk_elems['entry_period_days'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.tk_elems['entry_period_days'].bind('<Return>', lambda event: self.on_entry_change('period'))
+
+        self.tk_elems['period_days'] = tk.StringVar()
+        self.tk_elems['period_days'].set('0')
+        self.tk_elems['period_months'] = tk.StringVar()
+        self.tk_elems['period_months'].set('1')
+        self.tk_elems['period_years'] = tk.StringVar()
+        self.tk_elems['period_years'].set('0')
+
+        tk.Label(self.tk_elems['frame_DMY'], text=" Days ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_days'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], from_=0, to=31, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_days'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        tk.Label(self.tk_elems['frame_DMY'], text="   Months ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_months'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], from_=0, to=10, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        tk.Label(self.tk_elems['frame_DMY'], text="   Years ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_years'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], from_=0, to=10, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+
+        #▲▼
+
         ### Button Group In/Out (EXPENSE/INCOME/TRANSFER/ALL)
         self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
         self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT, fill=tk.BOTH)
@@ -221,9 +230,16 @@ class App:
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         self.tk_elems['button_groupby_note'] = tk.Button(self.tk_elems['frame_footer'], text='Note', width=12, command=lambda: self.popup_groupby('Note'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_note'].pack(side=tk.LEFT)
+
         # show popup window with balances
         self.show_balances()
-    
+
+        # the period spinbox variables need to be defined after tree_main exists
+        self.tk_elems['period_days'].trace('w', lambda *_: self.on_entry_change('period'))
+        self.tk_elems['period_months'].trace('w', lambda *_: self.on_entry_change('period'))
+        self.tk_elems['period_years'].trace('w', lambda *_: self.on_entry_change('period'))
+
+
     def group_opts_change(self):
         if self.tk_elems['group_category'].get():
             self.group_opts.append('Category')
@@ -251,6 +267,9 @@ class App:
 
     def move_time_window(self, direction=''):
         if direction == 'today':
+            self.tk_elems['period_days'].set('0')
+            self.tk_elems['period_months'].set('1')
+            self.tk_elems['period_years'].set('0')
             self.period = relativedelta(months=1)
             self.dates['start'] = self.todays_month - self.period
             self.dates['end'] = self.todays_month
@@ -327,11 +346,15 @@ class App:
         elif instruction == 'end':
             self.dates['end'] = datetime.datetime.fromisoformat(self.tk_elems['end_date'].get())
         elif instruction == 'period':
-            years = int(self.tk_elems['period_years'].get().split(" ")[0])
-            months = int(self.tk_elems['period_months'].get().split(" ")[0])
-            days = int(self.tk_elems['period_days'].get().split(" ")[0])
+            years = int(self.tk_elems['period_years'].get())
+            months = int(self.tk_elems['period_months'].get())
+            days = int(self.tk_elems['period_days'].get())
             self.period = relativedelta(years=years, months=months, days=days)
-            self.dates['end'] = self.dates['start'] + self.period
+            
+            if self.dates['start'] + self.period <= self.dates['last_record']:
+                self.dates['end'] = self.dates['start'] + self.period
+            else:
+                self.dates['start'] = self.dates['end'] - self.period
 
         if instruction in ['end', 'start']:
             self.period = parse_period(self.dates['start'], self.dates['end'])

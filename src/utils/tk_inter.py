@@ -40,7 +40,7 @@ def popup_tree_window(dataframe: pd.DataFrame, title: str, position: list = None
 
     for colname in (dataframe.columns):
         tree.column(colname, anchor='center', width=130, stretch=tk.NO)
-        tree.heading(colname, text=colname, anchor='center', command=lambda: treeview_sort_column(tree, colname, False))
+        tree.heading(colname, text=colname, anchor='center', command=lambda _col=colname: treeview_sort_column(tree, _col, False))
 
     update_tree_records(dataframe, tree)
 
@@ -66,7 +66,7 @@ def update_tree_structure(tree: ttk.Treeview, columns: List[str] = []):
         else:
             width = 130
         tree.column(colname, anchor='center', width=width, stretch=tk.NO)
-        tree.heading(colname, text=colname, anchor='center', command=lambda: treeview_sort_column(tree, colname, True))
+        tree.heading(colname, text=colname, anchor='center', command=lambda _col=colname: treeview_sort_column(tree, _col, False))
 
 
 def update_tree_records(dataframe: pd.DataFrame, tree: ttk.Treeview, columns: List[str] = []):
@@ -80,10 +80,14 @@ def update_tree_records(dataframe: pd.DataFrame, tree: ttk.Treeview, columns: Li
 
 
 def treeview_sort_column(tv, col, reverse):
-    l = [(tv.item(k)["text"], k) for k in tv.get_children()] #Display column #0 cannot be set
-    l.sort(key=lambda t: t[0], reverse=reverse)
-
+    l = [(tv.set(k, col), k) for k in tv.get_children()]
+    if col in ['ID', 'EUR', 'USD',' GBP', 'AccountBalance']:
+        l.sort(reverse=reverse, key=lambda tup: float(tup[0]))
+    else:
+        l.sort(reverse=reverse)
+    # rearrange items in sorted positions
     for index, (val, k) in enumerate(l):
         tv.move(k, '', index)
 
-    tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
+    # reverse sort next time
+    tv.heading(col, command=lambda _col=col: treeview_sort_column(tv, _col, not reverse))
