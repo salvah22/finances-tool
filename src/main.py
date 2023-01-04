@@ -30,6 +30,7 @@ class App:
     today = datetime.datetime.today()
     todays_month = datetime.datetime(today.year, today.month, 1)
 
+    '''
     @property
     def period(self):
         return self._period
@@ -43,17 +44,18 @@ class App:
         self.tk_elems['period_days'].set(str(self.period.days) + " days")
         self.tk_elems['period_months'].set(str(self.period.months) + " months")
         self.tk_elems['period_years'].set(str(self.period.years) + " years")
+    '''
 
+    # constructor, loads configs, data, and bootstrap the tk inter
     def __init__(self, tk=True):
         ### parameters ###
         with open('src/configs/app.yml', 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
-
-        self._period = relativedelta(months=1)
+        self.period = relativedelta(months=1)
         self.group = "None"
         self.group_opts = []
         self.in_out = self.config['default_subset']
-        self.dates = {'start': self.todays_month - self._period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
+        self.dates = {'start': self.todays_month - self.period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
         ### data ###
         if len(sys.argv) > 1:
             if os.path.exists(sys.argv[1]):
@@ -62,39 +64,42 @@ class App:
                 print("supplied file path not valid, file does not exist?")
         else:
             self.data_path = 'src/resources/dummy_data_with_balances.xlsx'
-
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
         print('data loaded and prepared successfully')
-
-        for currency in self.config['currencies']:
-            if currency in self.df.columns:
-                self.config['main_currency'] = currency
-                self.config['columns'].insert(-1, currency)
-                break
-
-        if 'AccountBalance' in self.df.columns:
-            self.config['columns'] += ['AccountBalance']
-        
+        # DF is supposed to have an ID and AccountBalance column in this point
+        self.config['columns'].insert(0, 'ID')
+        self.config['columns'].append('AccountBalance')
         self.config['display_columns'] = self.config['columns']
 
-        ### tk inter gui related stuff ###
+        ### tk inter gui ###
         self.tk_elems = {}
         if tk:
             self.init_tk()
-            self.period_update_callback()
             self.move_time_window('onwards') # wraps update_subset
             self.tk_elems['main_app'].mainloop()
 
+
     def load_df(self):
-        self.df = data_loader(self.data_path) # checks for the extensions and employs the proper load function
-        # prepare/preprocess the dataframe:
-        self.df = data_prepare(self.df)
+        # for employing the proper load function based on extension
+        self.df = data_loader(self.data_path)
+        # analyze the df for main_currency
+        self.determine_main_currency()
+        # ensure a datatime type column exists, fills NA's, adds ID and AccountBalance columns, sort by Day:
+        self.df = data_prepare(self.df, self.config['main_currency'])
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
         self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
-        self.df_subset = pd.DataFrame()
+
+    def determine_main_currency(self):
+        c = self.config['currencies'] 
+        for currency in c:
+            if currency in self.df.columns:
+                self.config['main_currency'] = currency
+                self.config['columns'].append(currency)
+                return
+        sys.exit('no valid currency found in dataframe. the header of one column has to match one of the following: ' + str(c))       
 
     def init_tk(self):
         ### main definitions
@@ -126,58 +131,70 @@ class App:
         self.tk_elems['style'].configure("mystyle.Treeview", font=self.config['fonts']['f08'])
         self.tk_elems['style'].configure("mystyle.Treeview.Heading", font=self.config['fonts']['f10'])
         self.tk_elems['style'].layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})])
-        self.tk_elems['frame_header'] = tk.Frame(self.tk_elems['main_app'])
+        self.tk_elems['frame_header'] = tk.Frame(self.tk_elems['main_app'], borderwidth=0)
         self.tk_elems['frame_header'].pack(expand=True)
-        ### Period frame
-        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
+        ### Period frames
+        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_header'], text='Today', height=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
+        self.tk_elems['button_today'].pack(side=tk.LEFT, fill=tk.Y)
+        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
+        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT, fill=tk.Y)
+        self.tk_elems['frame_period_alter'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
+        self.tk_elems['frame_period_alter'].pack(expand=True, side=tk.TOP, fill=tk.Y)
         self.tk_elems['start_date'] = tk.StringVar()
         self.tk_elems['end_date'] = tk.StringVar()
-        self.tk_elems['period_years'] = tk.StringVar()
-        self.tk_elems['period_months'] = tk.StringVar()
-        self.tk_elems['period_days'] = tk.StringVar()
-        self.tk_elems['button_today'] = tk.Button(self.tk_elems['frame_period'], text='Today', width=2, command=lambda: self.move_time_window('today'), font=self.config['fonts']['f12'], bg=self.config['colors']['green'])
-        self.tk_elems['button_today'].pack(side=tk.LEFT)
-        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period'], text='<', width=2, command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'])
-        self.tk_elems['button_backwards'].pack(side=tk.LEFT)
-        self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_start'].pack(side=tk.LEFT)
+        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='◄', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_backwards'].pack(side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10, justify='center')
+        self.tk_elems['entry_date_start'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_start'].bind('<Return>', lambda event: self.on_entry_change('start'))
-        self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10)
-        self.tk_elems['entry_date_end'].pack(side=tk.LEFT)
+        self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10, justify='center')
+        self.tk_elems['entry_date_end'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_end'].bind('<Return>', lambda event: self.on_entry_change('end'))
-        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_header'], text='>', width=2, command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'])
-        self.tk_elems['button_onwards'].pack(side=tk.LEFT)
-        self.tk_elems['frame_period'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_period'].pack(expand=True, side=tk.LEFT)
-        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_years'].pack(side=tk.BOTTOM)
-        self.tk_elems['entry_period_years'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_months'].pack(side=tk.BOTTOM)
-        self.tk_elems['entry_period_months'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_period'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=8)
-        self.tk_elems['entry_period_days'].pack(side=tk.BOTTOM)
-        self.tk_elems['entry_period_days'].bind('<Return>', lambda event: self.on_entry_change('period'))
+        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='►', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_onwards'].pack(side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['frame_DMY'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
+        self.tk_elems['frame_DMY'].pack(expand=True, side=tk.BOTTOM, fill=tk.Y)
+
+        self.tk_elems['period_days'] = tk.StringVar()
+        self.tk_elems['period_days'].set('0')
+        self.tk_elems['period_months'] = tk.StringVar()
+        self.tk_elems['period_months'].set('1')
+        self.tk_elems['period_years'] = tk.StringVar()
+        self.tk_elems['period_years'].set('0')
+
+        tk.Label(self.tk_elems['frame_DMY'], text=" Days ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_days'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], from_=0, to=31, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_days'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        tk.Label(self.tk_elems['frame_DMY'], text="   Months ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_months'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], from_=0, to=10, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        tk.Label(self.tk_elems['frame_DMY'], text="   Years ", font=self.config['fonts']['f10']).pack(side=tk.LEFT)
+        self.tk_elems['spinbox_period_years'] = tk.Spinbox(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], from_=0, to=10, increment=1, width=3, font=self.config['fonts']['f10'])
+        self.tk_elems['spinbox_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+
+        #▲▼
+
         ### Button Group In/Out (EXPENSE/INCOME/TRANSFER/ALL)
-        self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'])
-        self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT)
+        self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
+        self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT, fill=tk.BOTH)
+        self.tk_elems['frame_in_out'].columnconfigure(tuple(range(2)), weight=1)
+        self.tk_elems['frame_in_out'].rowconfigure(tuple(range(2)), weight=1)
         self.tk_elems['button_income'] = tk.Button(self.tk_elems['frame_in_out'], text='Income', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Income'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['blue'])
-        self.tk_elems['button_income'].grid(row=0, column=0)
+        self.tk_elems['button_income'].grid(row=0, column=0, sticky="nswe")
         self.tk_elems['button_expenses'] = tk.Button(self.tk_elems['frame_in_out'], text='Expenses', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Expenses'),
                                                   font=self.config['fonts']['f10'], bg=self.config['colors']['red'])
-        self.tk_elems['button_expenses'].grid(row=1, column=0)
+        self.tk_elems['button_expenses'].grid(row=1, column=0, sticky="nswe")
         self.tk_elems['button_transfers'] = tk.Button(self.tk_elems['frame_in_out'], text='Transfer', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_Transfer'),
                                                   font=self.config['fonts']['f10'])
-        self.tk_elems['button_transfers'].grid(row=0, column=1)
+        self.tk_elems['button_transfers'].grid(row=0, column=1, sticky="nswe")
         self.tk_elems['button_all'] = tk.Button(self.tk_elems['frame_in_out'], text='All', width=4, height=1,
                                                   command=lambda: self.update_subset('inout_All'),
                                                   font=self.config['fonts']['f10'])
-        self.tk_elems['button_all'].grid(row=1, column=1)
+        self.tk_elems['button_all'].grid(row=1, column=1, sticky="nswe")
         ### GROUPING
         self.tk_elems['frame_groups'] = tk.Frame(self.tk_elems['frame_header'], padx=5, pady=5) # , highlightbackground="black", highlightthickness=2
         self.tk_elems['frame_groups'].pack(expand=True)
@@ -212,10 +229,14 @@ class App:
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         self.tk_elems['button_groupby_note'] = tk.Button(self.tk_elems['frame_footer'], text='Note', width=12, command=lambda: self.popup_groupby('Note'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_note'].pack(side=tk.LEFT)
-        if 'AccountBalance' in self.config['display_columns']:
-            # show AccountBalance window
-            self.show_balances()
-    
+        # show popup window with balances
+        self.show_balances()
+
+        # the period spinbox variables need to be defined after tree_main exists
+        self.tk_elems['period_days'].trace('w', lambda *_: self.on_entry_change('period'))
+        self.tk_elems['period_months'].trace('w', lambda *_: self.on_entry_change('period'))
+        self.tk_elems['period_years'].trace('w', lambda *_: self.on_entry_change('period'))
+
     def group_opts_change(self):
         if self.tk_elems['group_category'].get():
             self.group_opts.append('Category')
@@ -243,6 +264,9 @@ class App:
 
     def move_time_window(self, direction=''):
         if direction == 'today':
+            self.tk_elems['period_days'].set('0')
+            self.tk_elems['period_months'].set('1')
+            self.tk_elems['period_years'].set('0')
             self.period = relativedelta(months=1)
             self.dates['start'] = self.todays_month - self.period
             self.dates['end'] = self.todays_month
@@ -271,6 +295,8 @@ class App:
         self.tk_elems['start_date'].set(self.dates['start'].strftime("%Y-%m-%d"))
         self.tk_elems['end_date'].set(self.dates['end'].strftime("%Y-%m-%d"))
         self.update_subset()
+        self.tk_elems['tree_main'].yview_moveto(0)
+
 
 
     def update_subset(self, instruction=''):
@@ -308,7 +334,7 @@ class App:
 
     def on_double_click(self, event):
         tree_idx = self.tk_elems['tree_main'].identify('item', event.x, event.y)
-        df_idx = self.tk_elems['tree_main'].item(tree_idx,'text')
+        df_idx = int(self.tk_elems['tree_main'].item(tree_idx, 'values')[0]) # formerly (tree_idx, 'text') when ID was supplied
         showinfo("Transaction Details", str(self.df_subset.loc[df_idx]))
 
 
@@ -318,11 +344,14 @@ class App:
         elif instruction == 'end':
             self.dates['end'] = datetime.datetime.fromisoformat(self.tk_elems['end_date'].get())
         elif instruction == 'period':
-            years = int(self.tk_elems['period_years'].get().split(" ")[0])
-            months = int(self.tk_elems['period_months'].get().split(" ")[0])
-            days = int(self.tk_elems['period_days'].get().split(" ")[0])
+            years = int(self.tk_elems['period_years'].get())
+            months = int(self.tk_elems['period_months'].get())
+            days = int(self.tk_elems['period_days'].get())
             self.period = relativedelta(years=years, months=months, days=days)
-            self.dates['end'] = self.dates['start'] + self.period
+            if self.dates['start'] + self.period <= self.dates['last_record']:
+                self.dates['end'] = self.dates['start'] + self.period
+            else:
+                self.dates['start'] = self.dates['end'] - self.period
 
         if instruction in ['end', 'start']:
             self.period = parse_period(self.dates['start'], self.dates['end'])
@@ -332,12 +361,12 @@ class App:
 
 
     def popup_groupby(self, by):
-        grouped = self.df_subset.groupby([by])['EUR'].sum().reset_index()
-        groupedsorted = grouped.sort_values(by='EUR', ascending=True)
+        grouped = self.df_subset.groupby([by])[self.config['main_currency']].sum().reset_index()
+        groupedsorted = grouped.sort_values(by=self.config['main_currency'], ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
         popup_tree_window(
             dataframe=groupedsortedrounded,
-            title="Data grouped by " + by,
+            title="Grouped by " + by,
             icon=self.tk_elems['icon']
         )
 

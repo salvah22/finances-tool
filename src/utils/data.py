@@ -2,7 +2,7 @@ import os, sys
 import pandas as pd
 import numpy as np
 
-def data_loader(path):
+def data_loader(path: str):
     """
     Function for loading inputs with a variety of extensions with the proper pandas read function
     """
@@ -16,6 +16,13 @@ def data_loader(path):
     else:
         sys.exit('data_path extension not supported')
         
+    return df
+
+
+def data_prepare(df: pd.DataFrame, main_currency: str):
+    """
+    Function for pre-processing the dataframe
+    """
     # lets check day is recognized as datetime:
     if df.select_dtypes(include=[np.datetime64]).shape[1] == 0:
         try:
@@ -26,20 +33,23 @@ def data_loader(path):
     # nans look ugly
     df.fillna("", inplace=True)
 
-    # we want inverse order for the treeview, .iloc[0] is the oldest date
-    return df.sort_values(by='Day', ascending=True) 
+    # we want inverse order for the treeview, .iloc[0] will point to the oldest date
+    df.sort_values(by='Day', ascending=True, inplace=True)
 
+    # generate AccountBalance column if not in dataframe, it needs to be sorted by day
+    if 'AccountBalance' not in df.columns:
+        df = compute_balance(df, main_currency)
 
+    # period is a very vague word for date, use it as datetime
+    df['datetime'] = df['Day']
 
-def data_prepare(df):
-    """
-    Function for pre-processing the dataframe
-    """
-    df['datetime'] = df['Day'] # period is a very vague word for date, use it as datetime
-    df['Day'] = [_.strftime("%Y-%m-%d") for _ in df['datetime'].to_list()] # convert period to strf (YYYY-MM-DD)
+    # convert period to strf (YYYY-MM-DD)
+    df['Day'] = [_.strftime("%Y-%m-%d") for _ in df['datetime'].to_list()] 
+
+    # add the ID / ROW column
+    df['ID'] = df.index
 
     return df
-
 
 def get_last_balance_per_account(df: pd.DataFrame) -> list[list]:
     """
@@ -58,3 +68,31 @@ def year_month_from_iso(datestring: str):
 def year_from_iso(datestring: str):
     yyyy, _, _ = datestring.split('-')
     return yyyy
+
+# function for computing a balances column in the dataframe
+def compute_balance(df: pd.DataFrame, main_currency: str):
+
+    # function for assigning a +/- sign to expenses/income movements
+    def amounts_with_sign(row):
+        if row["Income/Expenses"] == "Expenses" or row["Income/Expenses"] == "Transfer out":
+            return - row[main_currency]
+        elif row["Income/Expenses"] == "Income" or row["Income/Expenses"] == "Transfer in":
+            return row[main_currency]
+        else:
+            return 0
+    
+    accounts = df["Accounts"].unique()
+    
+    df["AccountBalance"] = 0
+    
+    df["_amountswsigns"] = df.apply(lambda row: amounts_with_sign(row), axis=1)
+
+    for acc in accounts:
+        cumsum = df[df["Accounts"] == acc]["_amountswsigns"].cumsum().round(2)
+        for i in cumsum.index:
+            df.loc[i, "AccountBalance"] = cumsum.loc[i]
+
+    # drop the temporal columns
+    df.drop("_amountswsigns", axis=1, inplace=True)
+    
+    return df
