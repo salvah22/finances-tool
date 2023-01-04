@@ -145,7 +145,7 @@ class App:
         self.tk_elems['period_years'] = tk.StringVar()
         self.tk_elems['period_months'] = tk.StringVar()
         self.tk_elems['period_days'] = tk.StringVar()
-        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='<', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_backwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='◄', command=lambda: self.move_time_window('backwards'), font=self.config['fonts']['f12'], height=1)
         self.tk_elems['button_backwards'].pack(side=tk.LEFT, fill=tk.BOTH)
         self.tk_elems['entry_date_start'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['start_date'], font=self.config['fonts']['f12'], width=10, justify='center')
         self.tk_elems['entry_date_start'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
@@ -153,19 +153,25 @@ class App:
         self.tk_elems['entry_date_end'] = tk.Entry(self.tk_elems['frame_period_alter'], textvariable=self.tk_elems['end_date'], font=self.config['fonts']['f12'], width=10, justify='center')
         self.tk_elems['entry_date_end'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_date_end'].bind('<Return>', lambda event: self.on_entry_change('end'))
-        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='>', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
+        self.tk_elems['button_onwards'] = tk.Button(self.tk_elems['frame_period_alter'], text='►', command=lambda: self.move_time_window('onwards'), font=self.config['fonts']['f12'], height=1)
         self.tk_elems['button_onwards'].pack(side=tk.LEFT, fill=tk.BOTH)
         self.tk_elems['frame_DMY'] = tk.Frame(self.tk_elems['frame_period'], borderwidth=0)
         self.tk_elems['frame_DMY'].pack(expand=True, side=tk.BOTTOM, fill=tk.Y)
-        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=11, justify='center')
-        self.tk_elems['entry_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.tk_elems['entry_period_years'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=11, justify='center')
-        self.tk_elems['entry_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.tk_elems['entry_period_months'].bind('<Return>', lambda event: self.on_entry_change('period'))
-        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=11, justify='center')
+
+        self.tk_elems['entry_period_days'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_days'], font=self.config['fonts']['f10'], width=10, justify='center')
         self.tk_elems['entry_period_days'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.tk_elems['entry_period_days'].bind('<Return>', lambda event: self.on_entry_change('period'))
+
+        self.tk_elems['entry_period_months'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_months'], font=self.config['fonts']['f10'], width=10, justify='center')
+        self.tk_elems['entry_period_months'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        self.tk_elems['entry_period_months'].bind('<Return>', lambda event: self.on_entry_change('period'))
+        
+        self.tk_elems['entry_period_years'] = tk.Entry(self.tk_elems['frame_DMY'], textvariable=self.tk_elems['period_years'], font=self.config['fonts']['f10'], width=10, justify='center')
+        self.tk_elems['entry_period_years'].pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        self.tk_elems['entry_period_years'].bind('<Return>', lambda event: self.on_entry_change('period'))
+
+        #▲▼
+
         ### Button Group In/Out (EXPENSE/INCOME/TRANSFER/ALL)
         self.tk_elems['frame_in_out'] = tk.Frame(self.tk_elems['frame_header'], borderwidth=0)
         self.tk_elems['frame_in_out'].pack(expand=True, side=tk.LEFT, fill=tk.BOTH)
