@@ -41,7 +41,6 @@ def popup_tree_window(dataframe: pd.DataFrame, title: str, position: list = None
     for colname in (dataframe.columns):
         tree.column(colname, anchor='center', width=130, stretch=tk.NO)
         tree.heading(colname, text=colname, anchor='center', command=lambda _col=colname: treeview_sort_column(tree, _col, False))
-
     update_tree_records(dataframe, tree)
 
 

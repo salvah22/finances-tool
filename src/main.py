@@ -56,7 +56,6 @@ class App:
         self.group_opts = []
         self.in_out = self.config['default_subset']
         self.dates = {'start': self.todays_month - self.period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
-
         ### data ###
         if len(sys.argv) > 1:
             if os.path.exists(sys.argv[1]):
@@ -230,7 +229,6 @@ class App:
         self.tk_elems['button_groupby_category'].pack(side=tk.LEFT)
         self.tk_elems['button_groupby_note'] = tk.Button(self.tk_elems['frame_footer'], text='Note', width=12, command=lambda: self.popup_groupby('Note'), font=self.config['fonts']['f10'], bg=self.config['colors']['green'])
         self.tk_elems['button_groupby_note'].pack(side=tk.LEFT)
-
         # show popup window with balances
         self.show_balances()
 
@@ -238,7 +236,6 @@ class App:
         self.tk_elems['period_days'].trace('w', lambda *_: self.on_entry_change('period'))
         self.tk_elems['period_months'].trace('w', lambda *_: self.on_entry_change('period'))
         self.tk_elems['period_years'].trace('w', lambda *_: self.on_entry_change('period'))
-
 
     def group_opts_change(self):
         if self.tk_elems['group_category'].get():
@@ -301,6 +298,7 @@ class App:
         self.tk_elems['tree_main'].yview_moveto(0)
 
 
+
     def update_subset(self, instruction=''):
         
         # timely
@@ -350,7 +348,6 @@ class App:
             months = int(self.tk_elems['period_months'].get())
             days = int(self.tk_elems['period_days'].get())
             self.period = relativedelta(years=years, months=months, days=days)
-            
             if self.dates['start'] + self.period <= self.dates['last_record']:
                 self.dates['end'] = self.dates['start'] + self.period
             else:
