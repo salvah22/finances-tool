@@ -14,7 +14,7 @@ from os import path
 import datetime
 from dateutil.relativedelta import relativedelta
 
-from tkinter import ttk
+from tkinter import ttk, PhotoImage
 
 # extra libraries
 import pandas as pd
@@ -87,11 +87,11 @@ class App:
             # self.init_tk()
             self.main = Mainwindow(self, self.config, 'src/resources/favicon.png', 'forest-dark')
             plt.rcParams['figure.facecolor'] = self.main.style_bg_col
-            self.balances_win = Treewindow(app=self, icon=self.main.icon)
-            self.groupby_win = Groupwindow(app=self, icon=self.main.icon)
-            self.details = Treewindow(app=self, icon=self.main.icon)
-            self.filters_win = Filterswindow(app=self, icon=self.main.icon)
-
+            self.icon_transparent = PhotoImage(file='src/resources/favicon_transparent.png')
+            self.balances_win = Treewindow(app=self, icon=self.icon_transparent)
+            self.groupby_win = Groupwindow(app=self, icon=self.icon_transparent)
+            self.details = Treewindow(app=self, icon=self.icon_transparent)
+            self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
             # show popup window with balances
             self.move_time_window('onwards') # wraps update_subset
             self.show_balances()
@@ -185,11 +185,7 @@ class App:
 
     def add_quick_filter(self, column, value):
         self.filters_list.append((column,value))
-
-        print(self.filters_list)
-        print(str(self.filters_cond()))
-        # print(str(eval(self.filters_cond())))
-
+        
         self.df_subset = self.df_subset[self.filters_cond()]
         
         self.filters_win.show(self.filters_list)
@@ -262,7 +258,7 @@ class App:
             dataframe = pd.DataFrame([self.df_subset.columns,self.df_subset.loc[df_idx].to_list()]).T.rename(columns={0: "Column", 1: "Cell"}),
             title = "Details",
             position = [
-                self.main.main_width + self.main.main_x + 15, 
+                self.main.main_width + self.main.main_x + 2, 
                 self.main.main_y + self.balances_win.dataframe.shape[0] * 30 + 60 # 30 * 11 ~ 340
             ]
         )
@@ -304,7 +300,7 @@ class App:
             dataframe = groupedsortedrounded,
             fig = pie_chart(df_grouped=grouped, color=self.main.style_bg_col),
             title = f"{self.in_out} grouped by {by}",
-            position = [15, 15] # [x,y]
+            position = [10, -10] # [x,y]
         )
 
 
@@ -315,12 +311,11 @@ class App:
             dataframe=balances[-balances["Account"].isin(self.config['hidden_balances'])], 
             title="Balances", 
             position=[ # [x,y]
-                self.main.main_width + self.main.main_x + 15, 
-                self.main.main_y - 13
+                self.main.main_width + self.main.main_x + 2, 
+                self.main.main_y
             ]
         )
-    
-
+        
 
 if __name__ == '__main__':
     app = App()

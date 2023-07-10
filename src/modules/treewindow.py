@@ -14,11 +14,11 @@ from utils.tk_inter import treeview_sort_column
 
 class Treewindow(Window):
     '''
-    tk toplevel window wrapping a treeview
+    tk toplevel window wrapping a treeview, used for balances and details
     '''
 
     def __init__(self, app, icon=None):
-        super().__init__()
+        super().__init__(icon)
         self.initiated = None
         self.tree_frame = None
         self.dataframe = None
@@ -27,7 +27,6 @@ class Treewindow(Window):
         self.headings = None
         self.tree = None
         self.app = app
-        self.icon = icon
         self.root = None
 
     def close(self):

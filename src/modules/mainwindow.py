@@ -18,7 +18,7 @@ class Mainwindow(Window):
     '''
 
     def __init__(self, parent, config, icon_path, theme=None):
-
+        
         ### main definitions
         self.app = parent
         self.config = config
@@ -32,9 +32,10 @@ class Mainwindow(Window):
         self.screen_height = self.root.winfo_screenheight()
         self.main_width = self.frame_tree_width + 10 # + 10 for margins ~ 1000
         self.main_height = self.frame_tree_height + 110 # 450 treeview + 110 other elements ~ 650
-        self.root.geometry(f'{self.main_width}x{self.main_height}')
         self.main_x = int((self.screen_width)/2 - (self.main_width)/2) # screen_width - app_width
         self.main_y = int((self.screen_height)/2 - (self.main_height)/2)
+        self.root.geometry(f'{self.main_width}x{self.main_height}+{self.main_x}+{self.main_y}')
+        self.root.resizable(False, False)
         self.icon = tk.PhotoImage(file=icon_path)
         self.root.tk.call('wm', 'iconphoto', self.root._w, self.icon)
         ### menu bar
@@ -47,6 +48,7 @@ class Mainwindow(Window):
         self.main_viewmenu = tk.Menu(self.main_menubar, tearoff=0)
         self.main_viewmenu.add_command(label='Balances', command=self.app.show_balances)
         self.main_viewmenu.add_command(label='Group By', command=lambda: self.app.update_groupby_win('Category'))
+        self.main_viewmenu.add_command(label='Filters', command=lambda: self.app.update_groupby_win('Category'))
         self.main_viewmenu.add_command(label='Configuration')
         self.main_menubar.add_cascade(label='View', menu=self.main_viewmenu)
         # set menubar when ready

@@ -20,9 +20,8 @@ class Groupwindow(Treewindow):
     '''
 
     def __init__(self, app, icon=None):
-        super().__init__(icon)
+        super().__init__(app, icon)
         self.tree_records = 15
-        self.app = app
         self.canvas_frame = None
         self.combined_frame = None
         self.footer_frame = None
