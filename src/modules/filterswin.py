@@ -39,7 +39,7 @@ class Filterswindow(Window):
                 self.buttons[dict_key].destroy()
             self.buttons = {}
         
-        self.buttons[0] = Button(self.root, text='New filter', style='Accent.TButton', command=lambda: Newfilterwindow(self, self.icon))
+        self.buttons[0] = Button(self.root, text='New filter', style='Accent.TButton', command=self.open_new_filter_window)
         self.buttons[0].pack(side=tk.TOP, fill=tk.BOTH, expand=1, padx=5, pady=5)
 
         # if the frame exists, detroy it
@@ -75,6 +75,9 @@ class Filterswindow(Window):
         self.app.filters_list = []
         self.app.update_subset()
         self._quit()
+
+    def open_new_filter_window(self):
+        Newfilterwindow(self, self.icon)
         
 
 class Newfilterwindow(Window):

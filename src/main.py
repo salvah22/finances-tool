@@ -100,7 +100,6 @@ class App:
             self.main.root.mainloop()
 
 
-
     def load_df(self):
         # for employing the proper load function based on extension
         self.df = data_loader(self.data_path)
@@ -111,6 +110,7 @@ class App:
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
         self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
+
 
     def determine_main_currency(self):
         c = self.config['currencies'] 

@@ -48,7 +48,7 @@ class Mainwindow(Window):
         self.main_viewmenu = tk.Menu(self.main_menubar, tearoff=0)
         self.main_viewmenu.add_command(label='Balances', command=self.app.show_balances)
         self.main_viewmenu.add_command(label='Group By', command=lambda: self.app.update_groupby_win('Category'))
-        self.main_viewmenu.add_command(label='Filters', command=lambda: self.app.update_groupby_win('Category'))
+        self.main_viewmenu.add_command(label='Filters', command=self.app.filters_win.open_new_filter_window)
         self.main_viewmenu.add_command(label='Configuration')
         self.main_menubar.add_cascade(label='View', menu=self.main_viewmenu)
         # set menubar when ready
