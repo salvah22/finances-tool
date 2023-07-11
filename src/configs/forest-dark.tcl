@@ -12,11 +12,10 @@ namespace eval ttk::theme::forest-dark {
     array set colors {
         -fg             "#eeeeee"
         -bg             "#313131"
-        -bg2            "#000000"
         -disabledfg     "#595959"
         -disabledbg     "#ffffff"
         -selectfg       "#ffffff"
-        -selectbg       "#217346"
+        -selectbg       "#217346" # Accent.Tbutton
     }
 
     proc LoadImages {imgdir} {
@@ -40,7 +39,6 @@ namespace eval ttk::theme::forest-dark {
             -selectforeground $colors(-selectfg) \
             -insertwidth 1 \
             -insertcolor $colors(-fg) \
-            -fieldbackground $colors(-selectbg) \
             -font {TkDefaultFont 10} \
             -borderwidth 1 \
             -relief flat
@@ -97,6 +95,14 @@ namespace eval ttk::theme::forest-dark {
             AccentButton.button -children {
                 AccentButton.padding -children {
                     AccentButton.label -side left -expand true
+                } 
+            }
+        }
+
+        ttk::style layout Red.TButton {
+            AccentButtonRed.button -children {
+                AccentButtonRed.padding -children {
+                    AccentButtonRed.label -side left -expand true
                 } 
             }
         }
@@ -292,6 +298,18 @@ namespace eval ttk::theme::forest-dark {
                 selected $I(rect-accent) \
                 pressed $I(rect-accent) \
                 active $I(rect-accent-hover) \
+            ] -border 4 -sticky nsew
+
+        # AccentButtonRed
+        ttk::style configure Red.TButton -padding {8 4 8 4} -width -10 -anchor center -foreground #eeeeee
+
+        ttk::style element create AccentButtonRed.button image \
+            [list $I(rect-accent-red) \
+                {selected disabled} $I(rect-accent-hover-red) \
+                disabled $I(rect-accent-hover-red) \
+                selected $I(rect-accent-red) \
+                pressed $I(rect-accent-red) \
+                active $I(rect-accent-hover-red) \
             ] -border 4 -sticky nsew
 
         # Checkbutton
