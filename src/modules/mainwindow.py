@@ -25,7 +25,7 @@ class Mainwindow(Window):
         self.tree_main_records = 15
         self.frame_tree_height = int(30 * self.tree_main_records)
         self.frame_tree_width = int(60 + (len(self.config['display_columns']) - 1) * 130) # 60 idx + 130 p/column
-        self.root = tk.Tk()
+        self.root = self.app.root
         self.root.title('Money Mgr.')
         self.root.bind('<Escape>', lambda e: self._quit())
         self.screen_width = self.root.winfo_screenwidth()
@@ -48,7 +48,7 @@ class Mainwindow(Window):
         self.main_viewmenu = tk.Menu(self.main_menubar, tearoff=0)
         self.main_viewmenu.add_command(label='Balances', command=self.app.show_balances)
         self.main_viewmenu.add_command(label='Group By', command=lambda: self.app.update_groupby_win('Category'))
-        self.main_viewmenu.add_command(label='Filters', command=self.app.filters_win.open_new_filter_window)
+        self.main_viewmenu.add_command(label='Filters', command=self.open_filters_win)
         self.main_viewmenu.add_command(label='Configuration')
         self.main_menubar.add_cascade(label='View', menu=self.main_viewmenu)
         # set menubar when ready
@@ -166,3 +166,9 @@ class Mainwindow(Window):
         self.period_days.trace('w', lambda *_: self.app.on_entry_change('period'))
         self.period_months.trace('w', lambda *_: self.app.on_entry_change('period'))
         self.period_years.trace('w', lambda *_: self.app.on_entry_change('period'))
+
+    def open_filters_win(self):
+        if len(self.app.filters_list) == 0:
+            self.app.filters_win.open_new_filter_window()
+        else:
+            self.app.filters_win.show(self.app.filters_list)

@@ -14,7 +14,7 @@ from os import path
 import datetime
 from dateutil.relativedelta import relativedelta
 
-from tkinter import ttk, PhotoImage
+from tkinter import ttk, PhotoImage, Tk
 
 # extra libraries
 import pandas as pd
@@ -85,13 +85,16 @@ class App:
         ### tk inter gui ###
         if tk:
             # self.init_tk()
+            self.root = Tk()
+
+            self.icon_transparent = PhotoImage(file='src/resources/favicon_transparent.png')
+            self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
             self.main = Mainwindow(self, self.config, 'src/resources/favicon.png', 'forest-dark')
             plt.rcParams['figure.facecolor'] = self.main.style_bg_col
-            self.icon_transparent = PhotoImage(file='src/resources/favicon_transparent.png')
             self.balances_win = Treewindow(app=self, icon=self.icon_transparent)
             self.groupby_win = Groupwindow(app=self, icon=self.icon_transparent)
             self.details = Treewindow(app=self, icon=self.icon_transparent)
-            self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
+
             # show popup window with balances
             self.move_time_window('onwards') # wraps update_subset
             self.show_balances()
@@ -196,7 +199,7 @@ class App:
     def update_tree_records(self):
         update_tree_records(self.df_subset, self.main.tree_main, self.config['display_columns'])
 
-
+    # parses filters_list to be used 
     def filters_cond(self):
 
         if len(self.filters_list) > 0:
