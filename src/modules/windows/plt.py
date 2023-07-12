@@ -5,7 +5,7 @@ tk toplevel window wrapping a matplotlib figure
 from tkinter import BOTH, TOP, Toplevel, Frame
 import numpy as np
 
-from modules.window import Window
+from modules.windows.window import Window
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 

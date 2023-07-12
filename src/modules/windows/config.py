@@ -2,7 +2,7 @@
 Window for app's config
 '''
 
-from modules.window import Window
+from .window import Window
 
 class Configwindow(Window):
     '''

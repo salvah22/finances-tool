@@ -10,7 +10,7 @@ import pandas as pd
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from modules.treewindow import Treewindow
+from .tree import Treewindow
 
 from utils.tk_inter import treeview_sort_column
 

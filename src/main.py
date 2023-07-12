@@ -21,10 +21,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # own modules
-from modules.mainwindow import Mainwindow
-from modules.groupwindow import Groupwindow
-from modules.treewindow import Treewindow
-from modules.filterswin import Filterswindow
+from modules.windows.main import Mainwindow
+from modules.windows.group import Groupwindow
+from modules.windows.tree import Treewindow
+from modules.windows.filters import Filterswindow
 
 # own utils
 from utils.time import parse_period
@@ -91,7 +91,7 @@ class App:
             self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
             self.main = Mainwindow(self, self.config, 'src/resources/favicon_verde.png', 'forest-dark')
             plt.rcParams['figure.facecolor'] = self.main.style_bg_col
-            self.balances_win = Treewindow(app=self, icon=self.icon_transparent)
+            self.balances_win = Treewindow(app=self, icon=self.icon_transparent, purpose="balances")
             self.groupby_win = Groupwindow(app=self, icon=self.icon_transparent)
             self.details = Treewindow(app=self, icon=self.icon_transparent)
 

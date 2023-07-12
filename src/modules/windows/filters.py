@@ -7,7 +7,7 @@ from tkinter import ttk
 import tkinter as tk
 from tkinter.ttk import Button, Entry, OptionMenu, LabelFrame
 
-from modules.window import Window
+from .window import Window
 
 class Filterswindow(Window):
     '''
@@ -34,7 +34,6 @@ class Filterswindow(Window):
 
         # if the button exists, detroy it
         if self.buttons is not None and not len(self.buttons) == 0:
-            print("self.buttons had: "+str(len(self.buttons))+" buttons")
             for dict_key in self.buttons:
                 self.buttons[dict_key].destroy()
             self.buttons = {}
@@ -45,36 +44,34 @@ class Filterswindow(Window):
         # if the frame exists, detroy it
         if self.frame is not None:
             self.frame.destroy()
-            
-        self.frame = LabelFrame(self.root, text="Active filters")
-        self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=1, padx=5, pady=5)
-        
-        r = 1
-        for filter_tuple in filters_list:
-            c = 0
-            tk.Label(self.frame, text=filter_tuple[0]).grid(row=r, column=c, padx=5, pady=5, sticky="w")
-            c += 1
-            tk.Label(self.frame, text=filter_tuple[1]).grid(row=r, column=c, padx=5, pady=5, sticky="w")
-            c += 1
-            self.buttons[r] = Button(self.frame, text='X', style='Red.TButton', command=lambda: self.remove_filter(filter_tuple))
-            self.buttons[r].grid(row=r, column=c, padx=5, pady=5)
-            r += 1
 
-        self.buttons[r] = Button(self.root, text='Delete all filters', style='Red.TButton', command=self.remove_all_filters)
-        self.buttons[r].pack(side=tk.TOP, fill=tk.BOTH, expand=1, padx=5, pady=5)
+        if len(filters_list) > 0:
+                
+            self.frame = LabelFrame(self.root, text="Active filters")
+            self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=1, padx=5, pady=5)
+            
+            r = 1
+            for filter_tuple in filters_list:
+                c = 0
+                tk.Label(self.frame, text=filter_tuple[0]).grid(row=r, column=c, padx=5, pady=5, sticky="w")
+                c += 1
+                tk.Label(self.frame, text=filter_tuple[1]).grid(row=r, column=c, padx=5, pady=5, sticky="w")
+                c += 1
+                self.buttons[r] = Button(self.frame, text='X', style='Red.TButton', command=lambda: self.remove_filter(filter_tuple))
+                self.buttons[r].grid(row=r, column=c, padx=5, pady=5)
+                r += 1
+
+            self.buttons[r] = Button(self.root, text='Delete all filters', style='Red.TButton', command=self.remove_all_filters)
+            self.buttons[r].pack(side=tk.TOP, fill=tk.BOTH, expand=1, padx=5, pady=5)
 
     def remove_filter(self, filter_tuple):
         self.app.filters_list.remove(filter_tuple)
         self.app.update_subset()
-        if len(self.app.filters_list) == 0:
-            self._quit()
-        else:
-            self.show(self.app.filters_list)
+        self.show(self.app.filters_list)
 
     def remove_all_filters(self):
         self.app.filters_list = []
         self.app.update_subset()
-        self._quit()
 
     def open_new_filter_window(self):
         Newfilterwindow(self, self.icon)
@@ -98,5 +95,9 @@ class Newfilterwindow(Window):
         self.tk_columns_opt.grid(row=0, column=0, padx=5, pady=5)
         self.tk_value_entry = Entry(self.tk_frame)
         self.tk_value_entry.grid(row=1, column=0, padx=5, pady=5)
-        self.tk_button = Button(self.tk_frame, text='Add', command=lambda: master.app.add_quick_filter(self.tk_column.get(), self.tk_value_entry.get()))
+        self.tk_button = Button(self.tk_frame, text='Add', command=lambda: self.add_quick_filter(self.tk_column.get(), self.tk_value_entry.get()))
         self.tk_button.grid(row=2, column=0, padx=5, pady=5)
+    
+    def add_quick_filter(self, column, value):
+        self.master.app.add_quick_filter(column, value)
+        self._quit()

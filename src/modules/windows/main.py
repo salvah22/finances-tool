@@ -8,7 +8,7 @@ import numpy as np
 
 from typing import List
 
-from modules.window import Window
+from .window import Window
 
 from utils.tk_inter import treeview_sort_column, update_tree_structure
 
@@ -46,10 +46,10 @@ class Mainwindow(Window):
         self.main_menubar.add_cascade(label='File', menu=self.main_filemenu)
         # view cascade menu
         self.main_viewmenu = tk.Menu(self.main_menubar, tearoff=0)
-        self.main_viewmenu.add_command(label='Balances', command=self.app.show_balances)
-        self.main_viewmenu.add_command(label='Group By', command=lambda: self.app.update_groupby_win('Category'))
-        self.main_viewmenu.add_command(label='Filters', command=self.open_filters_win)
-        self.main_viewmenu.add_command(label='Configuration')
+        self.main_viewmenu.add_command(label='Balances', command=lambda: self.showWindow('Balances'))
+        self.main_viewmenu.add_command(label='Group By', command=lambda: self.showWindow('Group By'))
+        self.main_viewmenu.add_command(label='Filters', command=lambda: self.showWindow('Filters'))
+        self.main_viewmenu.add_command(label='Configuration', command=lambda: self.showWindow('Filters'))
         self.main_menubar.add_cascade(label='View', menu=self.main_viewmenu)
         # set menubar when ready
         self.root.config(menu=self.main_menubar)
@@ -168,7 +168,28 @@ class Mainwindow(Window):
         self.period_years.trace('w', lambda *_: self.app.on_entry_change('period'))
 
     def open_filters_win(self):
-        if len(self.app.filters_list) == 0:
-            self.app.filters_win.open_new_filter_window()
-        else:
-            self.app.filters_win.show(self.app.filters_list)
+        self.app.filters_win.show(self.app.filters_list)
+
+
+    def showWindow(self, which_one):
+        if which_one == "Balances":
+            if self.app.balances_win.root is None or not self.app.balances_win.root.winfo_exists():
+                self.app.show_balances()
+            self.raise_above_all(self.app.balances_win.root)
+        elif which_one == "Group By":
+            if self.app.groupby_win.root is None or not self.app.groupby_win.root.winfo_exists():
+                self.app.update_groupby_win('Category')
+            self.raise_above_all(self.app.groupby_win.root)
+        elif which_one == "Filters":
+            if self.app.filters_win.root is None or not self.app.filters_win.root.winfo_exists():
+                self.open_filters_win()
+            self.raise_above_all(self.app.filters_win.root)
+        elif which_one == "Configuration":
+            pass
+    
+    def raise_above_all(self, window):
+        window.lift()
+        window.attributes('-topmost', True)
+        window.attributes('-topmost', False)
+        window.attributes('-topmost', 1)
+        window.attributes('-topmost', 0)

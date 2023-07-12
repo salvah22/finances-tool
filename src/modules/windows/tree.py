@@ -8,7 +8,7 @@ import pandas as pd
 
 from typing import List
 
-from modules.window import Window
+from .window import Window
 
 from utils.tk_inter import treeview_sort_column
 
@@ -17,7 +17,7 @@ class Treewindow(Window):
     tk toplevel window wrapping a treeview, used for balances and details
     '''
 
-    def __init__(self, app, icon=None):
+    def __init__(self, app, icon=None, purpose=None):
         super().__init__(icon)
         self.initiated = None
         self.tree_frame = None
@@ -27,7 +27,7 @@ class Treewindow(Window):
         self.headings = None
         self.tree = None
         self.app = app
-        self.root = None
+        self.purpose = purpose
 
     def close(self):
         if self.initiated:
@@ -123,10 +123,18 @@ class Treewindow(Window):
 
         finally:
             popup.grab_release()
+    
+    def add_quick_filter(self, column, value):
+        if self.purpose == "balances":
+            self.app.add_quick_filter("Accounts", column)
+        else:
+            self.app.add_quick_filter(column, value)
 
-
+'''
+To show the small rectangle saying "Filter With"
+'''
 class Popup(tk.Menu):
     def __init__(self, master, kvp):
         tk.Menu.__init__(self, master.root, tearoff=0)
-        self.add_command(label="Filter with", command=lambda: master.app.add_quick_filter(kvp[0], kvp[1]))
+        self.add_command(label="Filter with", command=lambda: master.add_quick_filter(kvp[0], kvp[1]))
         self.bind("<FocusOut>", lambda x: self.destroy())
