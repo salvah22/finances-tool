@@ -87,9 +87,9 @@ class App:
             # self.init_tk()
             self.root = Tk()
 
-            self.icon_transparent = PhotoImage(file='src/resources/favicon_transparent.png')
+            self.icon_transparent = PhotoImage(file='src/resources/favicon_dark.png')
             self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
-            self.main = Mainwindow(self, self.config, 'src/resources/favicon.png', 'forest-dark')
+            self.main = Mainwindow(self, self.config, 'src/resources/favicon_verde.png', 'forest-dark')
             plt.rcParams['figure.facecolor'] = self.main.style_bg_col
             self.balances_win = Treewindow(app=self, icon=self.icon_transparent)
             self.groupby_win = Groupwindow(app=self, icon=self.icon_transparent)
