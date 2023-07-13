@@ -85,7 +85,8 @@ class Newfilterwindow(Window):
         self.root = None
         self.root = tk.Toplevel(self.master.app.main.root)
         self.root.group(self.master.app.main.root)
-        self.root.bind('<Escape>', lambda e: self._quit())
+        self.root.bind('<Escape>', lambda _: self._quit())
+        self.root.bind("<FocusOut>", lambda _: self._quit())
         self.root.tk.call('wm', 'iconphoto', self.root._w, self.icon)
         self.root.wm_title("Add new filter")
         self.tk_frame = tk.Frame(self.root, borderwidth=0)

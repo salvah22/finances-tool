@@ -55,6 +55,7 @@ class App:
         # initiate important variables
         self.period = relativedelta(months=1)
         self.group = 'None'
+        self.group_by = None
         self.group_opts = []
         self.in_out = self.config['default_subset']
         self.dates = {'start': self.todays_month - self.period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
@@ -75,6 +76,7 @@ class App:
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
+        self.CURRENCY = self.config['main_currency']
         print('data loaded and prepared successfully')
         # df must have Row and AccountBalance columns
         self.config['columns'].insert(0, 'Row')
@@ -83,23 +85,22 @@ class App:
         self.filters_list = []
 
         ### tk inter gui ###
+        self.root = Tk()
+
+        self.icon_azul = PhotoImage(file='src/resources/favicon_dark.png')
+        self.filters_win = Filterswindow(app=self, icon=self.icon_azul)
+        self.main = Mainwindow(self, self.config, 'src/resources/favicon_verde.png', 'forest-dark')
+        plt.rcParams['figure.facecolor'] = self.main.style_bg_col
+        self.balances_win = Treewindow(app=self, icon=self.icon_azul, purpose="balances")
+        self.groupby_win = Groupwindow(app=self, icon=self.icon_azul, purpose="group")
+        self.details = Treewindow(app=self, icon=self.icon_azul)
+
+        # show popup window with balances
+        self.move_time_window('onwards') # wraps update_subset
+        self.show_balances()
+        self.update_groupby_win('Category')
+        self.initiated = True
         if tk:
-            # self.init_tk()
-            self.root = Tk()
-
-            self.icon_transparent = PhotoImage(file='src/resources/favicon_dark.png')
-            self.filters_win = Filterswindow(app=self, icon=self.icon_transparent)
-            self.main = Mainwindow(self, self.config, 'src/resources/favicon_verde.png', 'forest-dark')
-            plt.rcParams['figure.facecolor'] = self.main.style_bg_col
-            self.balances_win = Treewindow(app=self, icon=self.icon_transparent, purpose="balances")
-            self.groupby_win = Groupwindow(app=self, icon=self.icon_transparent)
-            self.details = Treewindow(app=self, icon=self.icon_transparent)
-
-            # show popup window with balances
-            self.move_time_window('onwards') # wraps update_subset
-            self.show_balances()
-            self.update_groupby_win('Category')
-            self.initiated = True
             self.main.root.mainloop()
 
 
@@ -134,6 +135,7 @@ class App:
         if self.group != "None":
             self.group_change(self.group)
 
+
     def group_change(self, group):
         self.details.close()
         self.group = group
@@ -143,7 +145,7 @@ class App:
             # -1 since original columns got the Row column
             self.main.frame_tree_width = int(60 + (len(self.config['display_columns']) - 1) * 130)
         else:
-            self.config['display_columns'] = ['group'] + self.group_opts + [self.config['main_currency']]
+            self.config['display_columns'] = ['group'] + self.group_opts + [self.CURRENCY]
             # groups aint got Row col
             self.main.frame_tree_width = int(len(self.config['display_columns']) * 130)
             
@@ -188,20 +190,22 @@ class App:
 
     def add_quick_filter(self, column, value):
         self.filters_list.append((column,value))
-        
-        self.df_subset = self.df_subset[self.filters_cond()]
-        
         self.filters_win.show(self.filters_list)
 
-        self.update_tree_records()
+        self.update_subset()
+
+        if column == "Note":
+            self.update_groupby_win("Category")
+        elif column == "Category":
+            self.update_groupby_win("Note")
 
 
     def update_tree_records(self):
         update_tree_records(self.df_subset, self.main.tree_main, self.config['display_columns'])
 
+
     # parses filters_list to be used 
     def filters_cond(self):
-
         if len(self.filters_list) > 0:
             _ = self.filters_list[0]
             filters_cond = (self.df_subset[_[0]] == _[1])
@@ -211,7 +215,7 @@ class App:
 
             return filters_cond
         
-        return list(self.df.columns)
+        return list(self.df_subset.columns)
 
     def update_subset(self, instruction=''):
         self.details.close()
@@ -234,18 +238,21 @@ class App:
 
         # groups
         if self.group != 'None':
+            # the columns have been carefuly selected to not break anything, don't change crazily
+            self.df_subset = self.df_subset[[_ for _ in self.df_subset.columns if _ != "datetime"]]
             if self.group == 'Day':
                 self.df_subset['group'] = self.df_subset['Day']
             elif self.group == 'Month':
                 self.df_subset['group'] = [year_month_from_iso(_) for _ in self.df_subset['Day'].to_list()]
             elif self.group == 'Year':
                 self.df_subset['group'] = [year_from_iso(_) for _ in self.df_subset['Day'].to_list()]
-            self.df_subset = self.df_subset.groupby(['group'] + self.group_opts).sum()[self.config['main_currency']].reset_index()
+            self.df_subset = self.df_subset.groupby(['group'] + self.group_opts).sum().reset_index()
             # group has the bad habit of having infinite decimal places
-            self.df_subset[self.config['main_currency']] = self.df_subset[self.config['main_currency']].round(2)
+            self.df_subset[self.CURRENCY] = self.df_subset[self.CURRENCY].round(2)
+            # self.update_groupby_win("Day")
 
         self.df_subset = self.df_subset[self.filters_cond()]
-
+        
         self.update_tree_records()
 
         # update groupby_win if it was initiated
@@ -257,10 +264,12 @@ class App:
         tree_idx = self.main.tree_main.identify_row(event.y) # self.main.tree_main.identify('item', event.x, event.y)
         df_idx = int(self.main.tree_main.item(tree_idx, 'values')[0]) # formerly (tree_idx, 'text') when Row was supplied
         
-        self.details.update(
+        self.details.update_plus_tk(
             dataframe = pd.DataFrame([self.df_subset.columns,self.df_subset.loc[df_idx].to_list()]).T.rename(columns={0: "Column", 1: "Cell"}),
             title = "Details",
             position = [
+                0,
+                0,
                 self.main.main_width + self.main.main_x + 2, 
                 self.main.main_y + self.balances_win.dataframe.shape[0] * 30 + 60 # 30 * 11 ~ 340
             ]
@@ -294,26 +303,27 @@ class App:
 
     def update_groupby_win(self, by):
         self.group_by = by
-        grouped = self.df_subset.groupby([by])[self.config['main_currency']]
+        grouped = self.df_subset.groupby([by])[self.CURRENCY]
         groupedsum = grouped.sum().reset_index()
-        groupedsorted = groupedsum.sort_values(by=self.config['main_currency'], ascending=True)
+        groupedsorted = groupedsum.sort_values(by=self.CURRENCY, ascending=True)
         groupedsortedrounded = groupedsorted.round(0)
 
         self.groupby_win.update(
             dataframe = groupedsortedrounded,
             fig = pie_chart(df_grouped=grouped, color=self.main.style_bg_col),
             title = f"{self.in_out} grouped by {by}",
-            position = [10, -10] # [x,y]
+            position = [500, 60, 10, -10] # [x,y]
         )
 
 
     def show_balances(self):
-        balances = pd.DataFrame(get_last_balance_per_account(self.df), columns=["Account",self.config['main_currency']])
+        balances = pd.DataFrame(get_last_balance_per_account(self.df), columns=["Account",self.CURRENCY])
 
-        self.balances_win.update(
+        self.balances_win.update_plus_tk(
             dataframe=balances[-balances["Account"].isin(self.config['hidden_balances'])], 
             title="Balances", 
             position=[ # [x,y]
+                0,0,
                 self.main.main_width + self.main.main_x + 2, 
                 self.main.main_y
             ]
