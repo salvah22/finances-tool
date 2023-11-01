@@ -56,10 +56,10 @@ def get_last_balance_per_account(df: pd.DataFrame) -> list[list]:
     """
     get the last known value of 'AccountBalance' for each account
     """
-    accounts = df["Accounts"].unique()
+    accounts = df["Account"].unique()
     balances = []
     for acc in accounts:
-        balances.append([acc, round(df[df["Accounts"] == acc].iloc[-1]["AccountBalance"], 2)])
+        balances.append([acc, round(df[df["Account"] == acc].iloc[-1]["AccountBalance"], 2)])
     return balances
 
 def year_month_from_iso(datestring: str):
@@ -75,21 +75,21 @@ def compute_balance(df: pd.DataFrame, main_currency: str):
 
     # function for assigning a +/- sign to expenses/income movements
     def amounts_with_sign(row):
-        if row["Income/Expenses"] == "Expenses" or row["Income/Expenses"] == "Transfer out":
+        if row["Direction"] == "Expenses" or row["Direction"] == "Transfer out":
             return - row[main_currency]
-        elif row["Income/Expenses"] == "Income" or row["Income/Expenses"] == "Transfer in":
+        elif row["Direction"] == "Income" or row["Direction"] == "Transfer in":
             return row[main_currency]
         else:
             return 0
     
-    accounts = df["Accounts"].unique()
+    accounts = df["Account"].unique()
     
     df["AccountBalance"] = 0
     
     df["_amountswsigns"] = df.apply(lambda row: amounts_with_sign(row), axis=1)
 
     for acc in accounts:
-        cumsum = df[df["Accounts"] == acc]["_amountswsigns"].cumsum().round(2)
+        cumsum = df[df["Account"] == acc]["_amountswsigns"].cumsum().round(2)
         for i in cumsum.index:
             df.loc[i, "AccountBalance"] = cumsum.loc[i]
 

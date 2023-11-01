@@ -71,7 +71,7 @@ class Treewindow(Window):
         # use a scroll bar for dataframes with more than 15 rows
         if self.dataframe.shape[0] > self.tree_records:
             self.scrollbar_bool=True
-            width += 15 # for the scrollbar
+            self.width += 15 # for the scrollbar
         else:
             self.scrollbar_bool=False
 
@@ -147,7 +147,7 @@ class Treewindow(Window):
     
     def add_quick_filter(self, column, value):
         if self.purpose == "balances":
-            self.app.add_quick_filter("Accounts", column)
+            self.app.add_quick_filter("Account", column)
         else:
             self.app.add_quick_filter(column, value)
 

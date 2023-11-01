@@ -195,8 +195,8 @@ class App:
         self.update_subset()
 
         if column == "Note":
-            self.update_groupby_win("Category")
-        elif column == "Category":
+            self.update_groupby_win("Category1")
+        elif column == "Category1":
             self.update_groupby_win("Note")
 
 
@@ -232,9 +232,9 @@ class App:
         if self.in_out == 'All':
             pass
         elif self.in_out in ['Income', 'Expenses']:
-            self.df_subset = self.df_subset[self.df_subset['Income/Expenses'] == self.in_out]
+            self.df_subset = self.df_subset[self.df_subset['Direction'] == self.in_out]
         elif self.in_out == 'Transfer':
-            self.df_subset = self.df_subset[(self.df_subset['Income/Expenses'] == 'Transfer in') | (self.df_subset['Income/Expenses'] == 'Transfer out')]
+            self.df_subset = self.df_subset[(self.df_subset['Direction'] == 'Transfer in') | (self.df_subset['Direction'] == 'Transfer out')]
 
         # groups
         if self.group != 'None':
@@ -276,11 +276,13 @@ class App:
         )
 
 
-    def on_entry_change(self, instruction):
+    def on_entry_change(self, instruction, date=None):
+        print(instruction)
+        print(self.main.start_date.get())
         if instruction == 'start':
-            self.dates['start'] = datetime.datetime.fromisoformat(self.main.start_date.get())
+            self.dates['start'] = datetime.datetime.fromisoformat(date)
         elif instruction == 'end':
-            self.dates['end'] = datetime.datetime.fromisoformat(self.main.end_date.get())
+            self.dates['end'] = datetime.datetime.fromisoformat(date)
         elif instruction == 'period':
             yearsStr = self.main.period_years.get()
             years = int(yearsStr) if yearsStr != '' else 0
@@ -332,3 +334,4 @@ class App:
 
 if __name__ == '__main__':
     app = App()
+    pass

@@ -4,8 +4,8 @@ default_subset: 'Expenses' # choices: 'Income', 'Expenses', 'Transfer in', 'Tran
 
 columns: # those in the data file
   - 'Day' # not optional. ISO date (or datetime) format
-  - 'Accounts'
-  - 'Income/Expenses'
+  - 'Account'
+  - 'Direction'
   - 'Category'
   - 'Note'
   - 'Detail'

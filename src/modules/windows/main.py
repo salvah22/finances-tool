@@ -5,6 +5,7 @@ from tkinter import ttk
 import tkinter as tk
 import pandas as pd
 import numpy as np
+from datetime import datetime as dt
 
 from typing import List
 
@@ -16,6 +17,7 @@ class Mainwindow(Window):
     '''
     Main frontend window
     '''
+
 
     def __init__(self, parent, config, icon_path, theme=None):
         
@@ -82,13 +84,15 @@ class Mainwindow(Window):
         self.button_backwards = ttk.Button(self.frame_period_alter, text='◄', command=lambda: self.app.move_time_window('backwards'))
         self.button_backwards.grid(row=0, column=c, sticky='w', padx=5) 
         c += 1
-        self.entry_date_start = ttk.Entry(self.frame_period_alter, textvariable=self.start_date,justify='center', width=10)
+        self.entry_date_start = ttk.Entry(self.frame_period_alter, textvariable=self.start_date,justify='center', width=10, validate = 'key')
         self.entry_date_start.grid(row=0, column=1, sticky='nsew', padx=5)
-        self.entry_date_start.bind('<Return>', lambda event: self.app.on_entry_change('start'))
+        # self.entry_date_start.bind('<Return>', lambda event: )
+        self.entry_date_start.configure(validatecommand=( self.entry_date_start.register( self.str_is_date_start ), '%P' ))
         c += 1
-        self.entry_date_end = ttk.Entry(self.frame_period_alter, textvariable=self.end_date, justify='center', width=10)
+        self.entry_date_end = ttk.Entry(self.frame_period_alter, textvariable=self.end_date, justify='center', width=10, validate = 'key')
         self.entry_date_end.grid(row=0, column=2, sticky='nsew', padx=5) 
-        self.entry_date_end.bind('<Return>', lambda event: self.app.on_entry_change('end'))
+        # self.entry_date_end.bind('<Return>', lambda event: self.app.on_entry_change('end'))
+        self.entry_date_end.configure(validatecommand=( self.entry_date_end.register( self.str_is_date_end ), '%P' ))
         c += 1
         self.button_onwards = ttk.Button(self.frame_period_alter, text='►', command=lambda: self.app.move_time_window('onwards'))
         self.button_onwards.grid(row=0, column=3, sticky='w', padx=5) 
@@ -167,6 +171,28 @@ class Mainwindow(Window):
         self.period_months.trace('w', lambda *_: self.app.on_entry_change('period'))
         self.period_years.trace('w', lambda *_: self.app.on_entry_change('period'))
 
+
+    def str_is_date_start(self, chars):
+        try:
+            dt.fromisoformat(chars)
+            self.app.on_entry_change('start', date=chars)
+            return True
+        except Exception as e:
+            print(e)
+            return True # len(chars) == 0 or chars in [ "-", ".", "-." ]
+            # This allows the strings '-', '.' and '-.' which could start a float.
+
+
+    def str_is_date_end(self, chars):
+        try:
+            dt.fromisoformat(chars)
+            self.app.on_entry_change('end', date=chars)
+            return True
+        except Exception as e:
+            print(e)
+            return True 
+
+
     def open_filters_win(self):
         self.app.filters_win.show(self.app.filters_list)
 
@@ -187,6 +213,7 @@ class Mainwindow(Window):
         elif which_one == "Configuration":
             pass
     
+
     def raise_above_all(self, window):
         window.lift()
         window.attributes('-topmost', True)
