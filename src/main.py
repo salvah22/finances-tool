@@ -58,7 +58,7 @@ class App:
         self.group_by = None
         self.group_opts = []
         self.in_out = self.config['default_subset']
-        self.dates = {'start': self.todays_month - self.period, 'end': self.todays_month} # dates in ISO format: '2022-06-01T00:00:00'
+        self.dates = {} # dates in ISO format: '2022-06-01T00:00:00'
         ### load data ###
         # locate input data to load as dataframe
         if data_path:
@@ -76,6 +76,11 @@ class App:
         self.df = pd.DataFrame()
         self.df_subset = pd.DataFrame()
         self.load_df()
+
+        initial = self.dates['last_record'] # self.todays_month
+        self.dates['start'] = initial - self.period # dates in ISO format: '2022-06-01T00:00:00'
+        self.dates['end'] = initial
+
         self.CURRENCY = self.config['main_currency']
         print('data loaded and prepared successfully')
         # df must have Row and AccountBalance columns
@@ -113,7 +118,10 @@ class App:
         self.df = data_prepare(self.df, self.config['main_currency'])
         # write the dates of the first and last record
         self.dates['first_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[0])
-        self.dates['last_record'] = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1]) + relativedelta(days=1)
+        _one_day = relativedelta(days=1)
+        _last_record = datetime.datetime.fromisoformat(self.df['Day'].iloc[-1])
+        _last = _last_record if ((_last_record + _one_day).month > _last_record.month) else _last_record + _one_day
+        self.dates['last_record'] = datetime.datetime(_last.year, _last.month, 1)
 
 
     def determine_main_currency(self):
